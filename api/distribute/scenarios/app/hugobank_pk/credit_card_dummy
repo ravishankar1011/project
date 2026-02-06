@@ -1,0 +1,135 @@
+#------------------------------------for credit cardtransaction------------------------
+#      ATM transaction — should fail
+#    Given I create below transaction for PHYSICAL card for user profile id and expect a status code of 200
+#      | user_profile_identifier | transaction_permutation_name | billing_amount | is_foreign_txn | channel |
+#      | UID1                    | AUTH_CLEAR                   | 10             | false          | POS     |
+#
+#    Then I wait for 10 seconds
+#
+#    And I check the available credits for user UID1 and available credit should be 2670 approx
+
+   -----------------------------------------------------------------------------------------
+
+   #
+   ##    ----------------------view and UPDATE LIMITS and get limit history-------------------------------------------
+   #    Then I initiate the initial user authorisation to UPDATE_CARD_LIMITS for user UID1 and expect a status of USER_AUTHORISATION_SUCCESS
+   #
+   #    Then I initiate the final user authorisation to UPDATE_CARD_LIMITS and expect a user authorisation status as USER_AUTHORISATION_INITIATED for user UID1
+   #
+   #    And I initiate the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_INITIATED
+   #
+   #    Then I process the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_PROCESSED
+   #
+   #    And I submit the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_SUCCESSFUL
+   #
+   #    Then I submit the final user authorisation for UPDATE_CARD_LIMITS of user UID1 and expect a status USER_AUTHORISATION_SUBMITTED
+   #
+   #    And I get the final user authorisation token for UPDATE_CARD_LIMITS of user UID1 and expect a status USER_AUTHORISATION_SUCCESS
+   #
+   #    Then I update card limit for user UID1 and expect status code 200
+   #      | limit_id        | value |
+   #      | POS_DAILY_LIMIT | 5000  |
+   #
+   #
+   #    # GET limits again to verify
+   #    Then I get card transaction channel limits for user UID1 and expect status code 200
+   #
+   #
+   #    # GET limit history
+   #    Then I get limit history for card for user UID1 and expect status code 200
+   #      | limit_id        |
+   #      | POS_DAILY_LIMIT |
+   #-------------------------------------------------------------------------------------------
+
+   ##-----------------------------for changing limit of channels--------------------------
+
+        Then I get card transaction channel limits for user UID1 and expect status code 200
+
+       Then I initiate the initial user authorisation to UPDATE_CARD_SETTINGS for user UID1 and expect a status of USER_AUTHORISATION_SUCCESS
+
+       Then I initiate the final user authorisation to UPDATE_CARD_SETTINGS and expect a user authorisation status as USER_AUTHORISATION_INITIATED for user UID1
+
+       And I initiate the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_INITIATED
+
+       Then I process the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_PROCESSED
+
+       And I submit the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_SUCCESSFUL
+
+       Then I submit the final user authorisation for UPDATE_CARD_SETTINGS of user UID1 and expect a status USER_AUTHORISATION_SUBMITTED
+
+       And I get the final user authorisation token for UPDATE_CARD_SETTINGS of user UID1 and expect a status USER_AUTHORISATION_SUCCESS
+
+       Then I block the Visa Physical Credit Card channel E_COMMERCE for user UID1
+
+       And I check status of Visa Physical Credit Card channel E_COMMERCE for UID1 and it should be DISABLED
+
+       Given I create below transaction for PHYSICAL card for user profile id and expect a status code of 200
+         | user_profile_identifier | transaction_permutation_name | billing_amount | is_foreign_txn | channel        |
+         | UID1                    | AUTH_CLEAR                   | 10             | false          | E_COMMERCE     |
+
+       Then I wait for 10 seconds
+
+       And I check the available credits for user UID1 and available credit should be 2640 approx
+
+       Then I unblock the Visa Physical Credit Card channel E_COMMERCE for user UID1
+
+       And I check status of Visa Physical Credit Card channel E_COMMERCE for UID1 and it should be ENABLED
+
+       Given I create below transaction for PHYSICAL card for user profile id and expect a status code of 200
+         | user_profile_identifier | transaction_permutation_name | billing_amount | is_foreign_txn | channel        |
+         | UID1                    | AUTH_CLEAR                   | 10             | false          | E_COMMERCE     |
+
+       Then I wait for 10 seconds
+
+       And I check the available credits for user UID1 and available credit should be 2630 approx
+
+
+---------------------Updating credit card limit------------------------------------------------------------
+    Then I fetch credit account list for user UID1
+
+    # Attempt to update credit limit when available balance < lien amount (should fail)
+    Then I initiate the initial user authorisation to UPDATE_CREDIT_LIMIT for user UID1 and expect a status of USER_AUTHORISATION_SUCCESS
+
+    Then I initiate the final user authorisation to UPDATE_CREDIT_LIMIT and expect a user authorisation status as USER_AUTHORISATION_INITIATED for user UID1
+
+    And I initiate the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_INITIATED
+
+    Then I process the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_PROCESSED
+
+    And I submit the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_SUCCESSFUL
+
+    Then I submit the final user authorisation for UPDATE_CREDIT_LIMIT of user UID1 and expect a status USER_AUTHORISATION_SUBMITTED
+
+    And I get the final user authorisation token for UPDATE_CREDIT_LIMIT of user UID1 and expect a status USER_AUTHORISATION_SUCCESS
+
+    Then I update credit limit for user UID1 and expect a status code of HSA_9145
+      | credit_limit |
+      | 50000        |
+
+    Then I fetch credit account list for user UID1
+
+#  Attempt to update credit limit when available balance >= lien amount (should pass)
+
+    Then I initiate the initial user authorisation to UPDATE_CREDIT_LIMIT for user UID1 and expect a status of USER_AUTHORISATION_SUCCESS
+
+    Then I initiate the final user authorisation to UPDATE_CREDIT_LIMIT and expect a user authorisation status as USER_AUTHORISATION_INITIATED for user UID1
+
+    And I initiate the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_INITIATED
+
+    Then I process the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_PROCESSED
+
+    And I submit the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_SUCCESSFUL
+
+    Then I submit the final user authorisation for UPDATE_CREDIT_LIMIT of user UID1 and expect a status USER_AUTHORISATION_SUBMITTED
+
+    And I get the final user authorisation token for UPDATE_CREDIT_LIMIT of user UID1 and expect a status USER_AUTHORISATION_SUCCESS
+
+    Then I update credit limit for user UID1 and expect a status code of 200
+      | credit_limit |
+      | 30000        |
+
+    Then I wait for 60 seconds
+
+    Then I fetch credit account list for user UID1
+
+    And I check the balance of the wallet with product code CASH_WALLET_CURRENT for user UID1 and the balance should be 26500 PKR exact

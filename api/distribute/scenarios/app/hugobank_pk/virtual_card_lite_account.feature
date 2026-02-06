@@ -1,0 +1,369 @@
+Feature: Virtual Cards scenarios for LITE account
+
+  Background: Create a new HUGOBANK LITE account
+
+    Given The user UID1 provides a valid mobile number on device_1 to initiate onboarding and the expected status is VERIFICATION_INITIATED
+      | user_name | user_name_type | ph_prefix |
+      | random    | PHONE_NUMBER   | +373      |
+
+    Then The user UID1 submits OTP to proceed with verification and expects a status code of 200 and a status of VERIFICATION_SUCCESS
+
+    Given I open a new HUGOBANK user account and expect the status code 200
+      | user_profile_identifier | email          | legal_name | name   | account_type |
+      | UID1                    | test@gmail.com | John Doe   | Johnny | PERSONAL     |
+
+    Then I initiate the initial onboarding of the user UID1 and expect a status INITIATED
+
+    Then I initiate the initial onboarding journey HUGOBANK_VERISYS within the ID_VERIFICATION_STEP for the user UID1 and expect a status of JOURNEY_INITIATED
+
+    Then I update HUGOBANK_VERISYS journey within the ID_VERIFICATION_STEP for user UID1 as pass
+
+    Then I process the initial onboarding journey HUGOBANK_VERISYS within the ID_VERIFICATION_STEP for user UID1, and expect a status JOURNEY_PROCESSED
+
+    Then I check status of the initial onboarding journey HUGOBANK_VERISYS within the ID_VERIFICATION_STEP for the user UID1, the status should be JOURNEY_PROCESSED
+
+    Then I submit the initial onboarding journey HUGOBANK_VERISYS within the ID_VERIFICATION_STEP for the user UID1 and expect the journey status to be JOURNEY_SUBMITTED
+
+    Then I check status of the initial onboarding journey HUGOBANK_VERISYS within the ID_VERIFICATION_STEP for the user UID1, the status should be JOURNEY_SUCCESSFUL
+
+    Then I initiate the initial onboarding journey HUGOBANK_BIO_VERISYS within the BIOMETRIC_VERIFICATION_STEP for the user UID1 and expect a status of JOURNEY_INITIATED
+
+    Then I update HUGOBANK_BIO_VERISYS journey within the BIOMETRIC_VERIFICATION_STEP for user UID1 as pass
+
+    Then I process the initial onboarding journey HUGOBANK_BIO_VERISYS within the BIOMETRIC_VERIFICATION_STEP for user UID1, and expect a status JOURNEY_PROCESSED
+
+    Then I check status of the initial onboarding journey HUGOBANK_BIO_VERISYS within the BIOMETRIC_VERIFICATION_STEP for the user UID1, the status should be JOURNEY_PROCESSED
+
+    Then I submit the initial onboarding journey HUGOBANK_BIO_VERISYS within the BIOMETRIC_VERIFICATION_STEP for the user UID1 and expect the journey status to be JOURNEY_SUBMITTED
+
+    Then I submit the initial onboarding for UID1, the onboarding status should be IN_PROGRESS and the account level should be L1
+
+    And I check the status of initial onboarding for UID1 and expect a onboarding status of COMPLETED
+
+    And I get user details for user UID1 and the user profile status should be PROFILE_IN_PROGRESS
+
+    Then I check the authorisation status of the device_1 for the user UID1 and expect a device authorisation status of DEVICE_AUTHORISATION_SUCCESS
+
+    And Create a binding signature for the user UID1 to bind the device_1 and the device binding status should be ACTIVE
+
+    Then I list all user devices for user UID1 and the user should have device_1
+
+    And I check the user details to confirm if user UID1 is L1 and the user profile status should be PROFILE_ACTIVE
+
+    Given I add a new Home Address to order a Card for user UID1 and expect a status code of 200
+
+    Then I check if the Home Address is added successfully for the user UID1
+
+  Scenario: Order -> Activate -> Block/Unblock -> DISABLE Virtual Card
+
+    Then I initiate the initial user authorisation to ORDER_CARD for user UID1 and expect a status of USER_AUTHORISATION_SUCCESS
+
+    Then I initiate the final user authorisation to ORDER_CARD and expect a user authorisation status as USER_AUTHORISATION_INITIATED for user UID1
+
+    And I initiate the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_INITIATED
+
+    Then I process the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_PROCESSED
+
+    And I submit the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_SUCCESSFUL
+
+    Then I submit the final user authorisation for ORDER_CARD of user UID1 and expect a status USER_AUTHORISATION_SUBMITTED
+
+    And I get the final user authorisation token for ORDER_CARD of user UID1 and expect a status USER_AUTHORISATION_SUCCESS
+
+    Then I get the user cash wallets for the user UID1 and expect the account status of CASH_ACCOUNT_STATUS_CREATED
+
+    Then I order a virtual card for UID1 with card name as random_valid_choice and expect a status code of 200 and expect a card status of CARD_STATUS_PENDING
+
+    Then I wait for card status as CARD_STATUS_ACTIVE to activate VIRTUAL card for user UID1
+
+    Then I check card status is CARD_STATUS_ACTIVE for user UID1 for VIRTUAL card
+
+    Then I initiate the initial user authorisation to UPDATE_CARD_STATUS for user UID1 and expect a status of USER_AUTHORISATION_SUCCESS
+
+    Then I initiate the final user authorisation to UPDATE_CARD_STATUS and expect a user authorisation status as USER_AUTHORISATION_INITIATED for user UID1
+
+    And I initiate the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_INITIATED
+
+    Then I process the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_PROCESSED
+
+    And I submit the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_SUCCESSFUL
+
+    Then I submit the final user authorisation for UPDATE_CARD_STATUS of user UID1 and expect a status USER_AUTHORISATION_SUBMITTED
+
+    And I get the final user authorisation token for UPDATE_CARD_STATUS of user UID1 and expect a status USER_AUTHORISATION_SUCCESS
+
+    Then I update the card status of the VIRTUAL card to BLOCK for user UID1 and expect a status code of 200
+
+    Then I check card status is CARD_STATUS_BLOCKED for user UID1 for VIRTUAL card
+
+    Then I deposit 1000 PKR into wallet with product code CASH_WALLET_CURRENT for user UID1 and expect a status code of 200
+
+    And I check the balance of the wallet with product code CASH_WALLET_CURRENT for user UID1 and the balance should be 1000 PKR exact
+
+    Given I create below transaction for VIRTUAL card for user profile id and expect a status code of 200
+      | user_profile_identifier | transaction_permutation_name | billing_amount | is_foreign_txn | channel    |
+      | UID1                    | AUTH_CLEAR                   | 1000           | false          | E_COMMERCE |
+
+    And I check the balance of the wallet with product code CASH_WALLET_CURRENT for user UID1 and the balance should be 1000 PKR exact
+
+    Then I initiate the initial user authorisation to UPDATE_CARD_STATUS for user UID1 and expect a status of USER_AUTHORISATION_SUCCESS
+
+    Then I initiate the final user authorisation to UPDATE_CARD_STATUS and expect a user authorisation status as USER_AUTHORISATION_INITIATED for user UID1
+
+    And I initiate the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_INITIATED
+
+    Then I process the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_PROCESSED
+
+    And I submit the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_SUCCESSFUL
+
+    Then I submit the final user authorisation for UPDATE_CARD_STATUS of user UID1 and expect a status USER_AUTHORISATION_SUBMITTED
+
+    And I get the final user authorisation token for UPDATE_CARD_STATUS of user UID1 and expect a status USER_AUTHORISATION_SUCCESS
+
+    Then I update the card status of the VIRTUAL card to UNBLOCK for user UID1 and expect a status code of 200
+
+    Then I check card status is CARD_STATUS_ACTIVE for user UID1 for VIRTUAL card
+
+    Given I create below transaction for VIRTUAL card for user profile id and expect a status code of 200
+      | user_profile_identifier | transaction_permutation_name | billing_amount | is_foreign_txn | channel    |
+      | UID1                    | AUTH_CLEAR                   | 1000           | false          | E_COMMERCE |
+
+    And I check the balance of the wallet with product code CASH_WALLET_CURRENT for user UID1 and the balance should be 0 PKR exact
+
+    Then I initiate the initial user authorisation to UPDATE_CARD_STATUS for user UID1 and expect a status of USER_AUTHORISATION_SUCCESS
+
+    Then I initiate the final user authorisation to UPDATE_CARD_STATUS and expect a user authorisation status as USER_AUTHORISATION_INITIATED for user UID1
+
+    And I initiate the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_INITIATED
+
+    Then I process the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_PROCESSED
+
+    And I submit the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_SUCCESSFUL
+
+    Then I submit the final user authorisation for UPDATE_CARD_STATUS of user UID1 and expect a status USER_AUTHORISATION_SUBMITTED
+
+    And I get the final user authorisation token for UPDATE_CARD_STATUS of user UID1 and expect a status USER_AUTHORISATION_SUCCESS
+
+    Then I update the card status of the VIRTUAL card to DISABLE for user UID1 and expect a status code of 200
+
+    Then I check card status is CARD_STATUS_DISABLED for user UID1 for VIRTUAL card
+
+  Scenario: Virtual Card transactions with updated limits for LITE account
+
+    Then I initiate the initial user authorisation to ORDER_CARD for user UID1 and expect a status of USER_AUTHORISATION_SUCCESS
+
+    Then I initiate the final user authorisation to ORDER_CARD and expect a user authorisation status as USER_AUTHORISATION_INITIATED for user UID1
+
+    And I initiate the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_INITIATED
+
+    Then I process the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_PROCESSED
+
+    And I submit the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_SUCCESSFUL
+
+    Then I submit the final user authorisation for ORDER_CARD of user UID1 and expect a status USER_AUTHORISATION_SUBMITTED
+
+    And I get the final user authorisation token for ORDER_CARD of user UID1 and expect a status USER_AUTHORISATION_SUCCESS
+
+    Then I get the user cash wallets for the user UID1 and expect the account status of CASH_ACCOUNT_STATUS_CREATED
+
+    Then I order a virtual card for UID1 with card name as random_valid_choice and expect a status code of 200 and expect a card status of CARD_STATUS_PENDING
+
+    Then I wait for card status as CARD_STATUS_ACTIVE to activate VIRTUAL card for user UID1
+
+    Then I check card status is CARD_STATUS_ACTIVE for user UID1 for VIRTUAL card
+
+    Then I deposit 50000 PKR into wallet with product code CASH_WALLET_CURRENT for user UID1 and expect a status code of 200
+
+    And I check the balance of the wallet with product code CASH_WALLET_CURRENT for user UID1 and the balance should be 50000 PKR exact
+
+    Then I initiate the initial user authorisation to UPDATE_CARD_LIMITS for user UID1 and expect a status of USER_AUTHORISATION_SUCCESS
+
+    Then I initiate the final user authorisation to UPDATE_CARD_LIMITS and expect a user authorisation status as USER_AUTHORISATION_INITIATED for user UID1
+
+    And I initiate the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_INITIATED
+
+    Then I process the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_PROCESSED
+
+    And I submit the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_SUCCESSFUL
+
+    Then I submit the final user authorisation for UPDATE_CARD_LIMITS of user UID1 and expect a status USER_AUTHORISATION_SUBMITTED
+
+    And I get the final user authorisation token for UPDATE_CARD_LIMITS of user UID1 and expect a status USER_AUTHORISATION_SUCCESS
+
+    And I update the Gold Rewards Card limit of channel E_COMMERCE to 10000 PKR for user UID1 and expect a status code of 200
+
+    Then I check if the Gold Rewards Card limit for the E_COMMERCE channel is set to 10000 PKR for user UID1
+
+    Given I create below transaction for VIRTUAL card for user profile id and expect a status code of 200
+      | user_profile_identifier | transaction_permutation_name | billing_amount | is_foreign_txn | channel    |
+      | UID1                    | AUTH_CLEAR                   | 10500          | false          | E_COMMERCE |
+
+    And I check the balance of the wallet with product code CASH_WALLET_CURRENT for user UID1 and the balance should be 50000 PKR exact
+
+    Given I create below transaction for VIRTUAL card for user profile id and expect a status code of 200
+      | user_profile_identifier | transaction_permutation_name | billing_amount | is_foreign_txn | channel    |
+      | UID1                    | AUTH_CLEAR                   | 10000          | false          | E_COMMERCE |
+
+    And I check the balance of the wallet with product code CASH_WALLET_CURRENT for user UID1 and the balance should be 40000 PKR exact
+
+  Scenario: Blocking channel in virtual card
+
+    Then I initiate the initial user authorisation to ORDER_CARD for user UID1 and expect a status of USER_AUTHORISATION_SUCCESS
+
+    Then I initiate the final user authorisation to ORDER_CARD and expect a user authorisation status as USER_AUTHORISATION_INITIATED for user UID1
+
+    And I initiate the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_INITIATED
+
+    Then I process the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_PROCESSED
+
+    And I submit the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_SUCCESSFUL
+
+    Then I submit the final user authorisation for ORDER_CARD of user UID1 and expect a status USER_AUTHORISATION_SUBMITTED
+
+    And I get the final user authorisation token for ORDER_CARD of user UID1 and expect a status USER_AUTHORISATION_SUCCESS
+
+    Then I get the user cash wallets for the user UID1 and expect the account status of CASH_ACCOUNT_STATUS_CREATED
+
+    Then I order a virtual card for UID1 with card name as random_valid_choice and expect a status code of 200 and expect a card status of CARD_STATUS_PENDING
+
+    Then I wait for card status as CARD_STATUS_ACTIVE to activate VIRTUAL card for user UID1
+
+    Then I check card status is CARD_STATUS_ACTIVE for user UID1 for VIRTUAL card
+
+    Then I deposit 10000 PKR into wallet with product code CASH_WALLET_CURRENT for user UID1 and expect a status code of 200
+
+    And I check the balance of the wallet with product code CASH_WALLET_CURRENT for user UID1 and the balance should be 10000 PKR exact
+
+    Then I initiate the initial user authorisation to UPDATE_CARD_SETTINGS for user UID1 and expect a status of USER_AUTHORISATION_SUCCESS
+
+    Then I initiate the final user authorisation to UPDATE_CARD_SETTINGS and expect a user authorisation status as USER_AUTHORISATION_INITIATED for user UID1
+
+    And I initiate the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_INITIATED
+
+    Then I process the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_PROCESSED
+
+    And I submit the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_SUCCESSFUL
+
+    Then I submit the final user authorisation for UPDATE_CARD_SETTINGS of user UID1 and expect a status USER_AUTHORISATION_SUBMITTED
+
+    And I get the final user authorisation token for UPDATE_CARD_SETTINGS of user UID1 and expect a status USER_AUTHORISATION_SUCCESS
+
+    Then I block the Gold Rewards Card channel E_COMMERCE for user UID1
+
+    And I check the status of Gold Rewards Card channel E_COMMERCE to be DISABLED for user UID1
+
+    Given I create below transaction for VIRTUAL card for user profile id and expect a status code of 200
+      | user_profile_identifier | transaction_permutation_name | billing_amount | is_foreign_txn | channel    |
+      | UID1                    | AUTH_CLEAR                   | 10000          | false          | E_COMMERCE |
+
+    And I check the balance of the wallet with product code CASH_WALLET_CURRENT for user UID1 and the balance should be 10000 PKR exact
+
+    Then I unblock the Gold Rewards Card channel E_COMMERCE for user UID1
+
+    And I check the status of Gold Rewards Card channel E_COMMERCE to be ENABLED for user UID1
+
+    Given I create below transaction for VIRTUAL card for user profile id and expect a status code of 200
+      | user_profile_identifier | transaction_permutation_name | billing_amount | is_foreign_txn | channel    |
+      | UID1                    | AUTH_CLEAR                   | 10000          | false          | E_COMMERCE |
+
+    And I check the balance of the wallet with product code CASH_WALLET_CURRENT for user UID1 and the balance should be 0 PKR exact
+
+  Scenario: Virtual Card Failure Scenarios
+
+    Then I initiate the initial user authorisation to ORDER_CARD for user UID1 and expect a status of USER_AUTHORISATION_SUCCESS
+
+    Then I initiate the final user authorisation to ORDER_CARD and expect a user authorisation status as USER_AUTHORISATION_INITIATED for user UID1
+
+    And I initiate the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_INITIATED
+
+    Then I process the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_PROCESSED
+
+    And I submit the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_SUCCESSFUL
+
+    Then I submit the final user authorisation for ORDER_CARD of user UID1 and expect a status USER_AUTHORISATION_SUBMITTED
+
+    And I get the final user authorisation token for ORDER_CARD of user UID1 and expect a status USER_AUTHORISATION_SUCCESS
+
+    Then I get the user cash wallets for the user UID1 and expect the account status of CASH_ACCOUNT_STATUS_CREATED
+
+    Then I order a virtual card for UID1 with card name as random_valid_choice and expect a status code of 200 and expect a card status of CARD_STATUS_PENDING
+
+    Then I initiate the initial user authorisation to ORDER_CARD for user UID1 and expect a status of USER_AUTHORISATION_SUCCESS
+
+    Then I initiate the final user authorisation to ORDER_CARD and expect a user authorisation status as USER_AUTHORISATION_INITIATED for user UID1
+
+    And I initiate the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_INITIATED
+
+    Then I process the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_PROCESSED
+
+    And I submit the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_SUCCESSFUL
+
+    Then I submit the final user authorisation for ORDER_CARD of user UID1 and expect a status USER_AUTHORISATION_SUBMITTED
+
+    And I get the final user authorisation token for ORDER_CARD of user UID1 and expect a status USER_AUTHORISATION_SUCCESS
+
+    Then I order a virtual card for UID1 with card name as random_valid_choice and expect a status code of 200 and expect a card status of CARD_STATUS_PENDING
+
+    Then I initiate the initial user authorisation to ORDER_CARD for user UID1 and expect a status of USER_AUTHORISATION_SUCCESS
+
+    Then I initiate the final user authorisation to ORDER_CARD and expect a user authorisation status as USER_AUTHORISATION_INITIATED for user UID1
+
+    And I initiate the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_INITIATED
+
+    Then I process the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_PROCESSED
+
+    And I submit the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_SUCCESSFUL
+
+    Then I submit the final user authorisation for ORDER_CARD of user UID1 and expect a status USER_AUTHORISATION_SUBMITTED
+
+    And I get the final user authorisation token for ORDER_CARD of user UID1 and expect a status USER_AUTHORISATION_SUCCESS
+
+    Then I order a virtual card for UID1 with card name as random_valid_choice and expect a status code of 200 and expect a card status of CARD_STATUS_PENDING
+
+    Then I initiate the initial user authorisation to ORDER_CARD for user UID1 and expect a status of USER_AUTHORISATION_SUCCESS
+
+    Then I initiate the final user authorisation to ORDER_CARD and expect a user authorisation status as USER_AUTHORISATION_INITIATED for user UID1
+
+    And I initiate the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_INITIATED
+
+    Then I process the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_PROCESSED
+
+    And I submit the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_SUCCESSFUL
+
+    Then I submit the final user authorisation for ORDER_CARD of user UID1 and expect a status USER_AUTHORISATION_SUBMITTED
+
+    And I get the final user authorisation token for ORDER_CARD of user UID1 and expect a status USER_AUTHORISATION_SUCCESS
+
+    Then I order a virtual card for UID1 with card name as random_valid_choice and expect a status code of 200 and expect a card status of CARD_STATUS_PENDING
+
+    Then I initiate the initial user authorisation to ORDER_CARD for user UID1 and expect a status of USER_AUTHORISATION_SUCCESS
+
+    Then I initiate the final user authorisation to ORDER_CARD and expect a user authorisation status as USER_AUTHORISATION_INITIATED for user UID1
+
+    And I initiate the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_INITIATED
+
+    Then I process the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_PROCESSED
+
+    And I submit the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_SUCCESSFUL
+
+    Then I submit the final user authorisation for ORDER_CARD of user UID1 and expect a status USER_AUTHORISATION_SUBMITTED
+
+    And I get the final user authorisation token for ORDER_CARD of user UID1 and expect a status USER_AUTHORISATION_SUCCESS
+
+    Then I order a virtual card for UID1 with card name as random_valid_choice and expect a status code of 200 and expect a card status of CARD_STATUS_PENDING
+
+    Then I initiate the initial user authorisation to ORDER_CARD for user UID1 and expect a status of USER_AUTHORISATION_SUCCESS
+
+    Then I initiate the final user authorisation to ORDER_CARD and expect a user authorisation status as USER_AUTHORISATION_INITIATED for user UID1
+
+    And I initiate the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_INITIATED
+
+    Then I process the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_PROCESSED
+
+    And I submit the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_SUCCESSFUL
+
+    Then I submit the final user authorisation for ORDER_CARD of user UID1 and expect a status USER_AUTHORISATION_SUBMITTED
+
+    Then I order a virtual card for UID1 with card name as random_valid_choice and expect a status code of HSA_9390 and expect a card status of Allowed Active Virtual Cards per Product limit reached
+
+

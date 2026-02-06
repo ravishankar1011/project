@@ -1,0 +1,103 @@
+{
+  "UID1": {
+    "cardId": "653e080f-deec-4315-ad07-ba36b6459ae8",
+    "cardAccountId": "b7bdd440-3aa3-4697-bd6c-96df6f29f752",
+    "cardType": "PHYSICAL",
+    "category": "CREDIT_CARD",
+    "scheme": "VISA",
+    "cardStatus": "CARD_STATUS_ACTIVE",
+    "nameOnCard": "John Doe",
+    "cardLast4Digits": "1234",
+    "channels": [
+      {
+        "channel": "POS",
+        "channelStatus": {
+          "posStatus": {
+            "enabled": true,
+            "localEnabled": true,
+            "internationalEnabled": false
+          }
+        },
+        "cardLimitDetails": {
+          "limitId": "33a419ef-e840-4f42-b988-d6dcfed37b1e",
+          "accountId": "653e080f-deec-4315-ad07-ba36b6459ae8",
+          "limitWindow": {
+            "type": "CALENDER_DAY",
+            "value": 1
+          },
+          "minValue": 0.0,
+          "maxValue": 200000.0,
+          "userSetValue": 5000.0,
+          "currentSpentValue": 0.0,
+          "isEditable": true,
+          "isCumulativeLimit": true,
+          "isHardLimit": true,
+          "displayTitle": "",
+          "displayText": "",
+          "limitUsageStatus": "LIMIT_USAGE_WITHIN_SAFE"
+        }
+      },
+      {
+        "channel": "E_COMMERCE",
+        "channelStatus": {
+          "ecomStatus": {
+            "enabled": true,
+            "localEnabled": true,
+            "internationalEnabled": false
+          }
+        },
+        "cardLimitDetails": {
+          "limitId": "0566baad-6059-4ca1-a9db-30bd2f40ae5e",
+          "accountId": "653e080f-deec-4315-ad07-ba36b6459ae8",
+          "limitWindow": {
+            "type": "CALENDER_DAY",
+            "value": 1
+          },
+          "minValue": 0.0,
+          "maxValue": 200000.0,
+          "userSetValue": 200000.0,
+          "currentSpentValue": 0.0,
+          "isEditable": true,
+          "isCumulativeLimit": true,
+          "isHardLimit": true,
+          "displayTitle": "",
+          "displayText": "",
+          "limitUsageStatus": "LIMIT_USAGE_WITHIN_SAFE"
+        }
+      },
+      {
+        "channel": "ATM",
+        "channelStatus": {
+          "atmStatus": {
+            "enabled": true,
+            "localEnabled": true,
+            "internationalEnabled": false
+          }
+        },
+        "cardLimitDetails": {
+          "limitId": "b91b958c-5233-47d8-a664-758d0bcddfbe",
+          "accountId": "653e080f-deec-4315-ad07-ba36b6459ae8",
+          "limitWindow": {
+            "type": "CALENDER_DAY",
+            "value": 1
+          },
+          "minValue": 0.0,
+          "maxValue": 100000.0,
+          "userSetValue": 100000.0,
+          "currentSpentValue": 0.0,
+          "isEditable": true,
+          "isCumulativeLimit": true,
+          "isHardLimit": true,
+          "displayTitle": "",
+          "displayText": "",
+          "limitUsageStatus": "LIMIT_USAGE_WITHIN_SAFE"
+        }
+      }
+    ],
+    "userActionDetails": {
+      "DISABLE": "ALLOWED",
+      "UNBLOCK": "NOT_ALLOWED",
+      "BLOCK": "ALLOWED"
+    }
+  }
+}

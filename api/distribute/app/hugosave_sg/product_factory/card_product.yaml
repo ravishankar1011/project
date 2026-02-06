@@ -1,0 +1,90 @@
+service:
+  service_name: "CARD_SERVICE"
+  products:
+    - product_code: "CARD_PRODUCT_PHYSICAL_CARD"
+      end_product_code: "VISA_PH"
+      provider_id: "CLOWD9"
+      profile_type: "END_CUSTOMER"
+      product_class: "SHARIAH"
+      product_type: "CARD"
+      product_access_type: "USER_ONLY"
+      product_name: "EndCustomer Physical Card"
+      product_description: "EndCustomer Physical Card"
+      card_params:
+        card_account_product_code: "CARD_PRODUCT_CARD_ACCOUNT"
+        card_design_config_code: "RED_01"
+        bin_config_code: "P_BIN_1"
+        scheme: "VISA"
+        number_of_active_physical_cards: 1
+        number_of_active_virtual_cards: 0
+        card_validity: 60
+        card_emboss_name_length:
+          min_value: 1
+          max_value: 21
+        allowed_card_types:
+          - "PHYSICAL"
+        allow_non_3ds_transactions: false
+        allow_card_not_present_transactions: false
+        initial_status_of_virtual_card: "ACTIVE"
+        allowed_countries:
+          - "SGP"
+        transaction_channel:
+          - "E_COMMERCE"
+          - "POS"
+        transaction_region:
+          - "DOMESTIC"
+          - "INTERNATIONAL"
+        instant_use: true
+        tap_and_pay: true
+      transaction_codes:
+        - transaction_action: "CARD_ATM_CASH_WITHDRAWAL_DOMESTIC"
+          transaction_code: "550001"
+          description: "Card transaction on ATM channel to withdraw funds within the country the account is held"
+        - transaction_action: "CARD_ATM_CASH_WITHDRAWAL_INTERNATIONAL"
+          transaction_code: "550002"
+          description: "Card transaction on ATM channel to withdraw funds outside of the country the account is held"
+        - transaction_action: "CARD_ATM_BALANCE_INQUIRY_DOMESTIC"
+          transaction_code: "550003"
+          description: "Card transaction on ATM channel for Balance Inquiry within the country the account is held"
+        - transaction_action: "CARD_ATM_BALANCE_INQUIRY_INTERNATIONAL"
+          transaction_code: "550004"
+          description: "Card transaction on ATM channel for Balance Inquiry outside of the country the account is held"
+
+        - transaction_action: "CARD_CHIP_AND_PIN_INTERNATIONAL"
+          transaction_code: "550005"
+          description: "Card transaction via POS channel, where the card's embedded chip was used, and the cardholder's PIN was entered for authentication - outside of the country the account is held."
+        - transaction_action: "CARD_CHIP_AND_PIN_DOMESTIC"
+          transaction_code: "550006"
+          description: "Card transaction via POS channel, where the card's embedded chip was used, and the cardholder's PIN was entered for authentication - within the country the account is held."
+        - transaction_action: "CARD_MAGNETIC_STRIPE_INTERNATIONAL"
+          transaction_code: "550007"
+          description: "Card transaction via POS channel, where the card's magnetic stripe was swiped, - outside of the country the account is held."
+        - transaction_action: "CARD_MAGNETIC_STRIPE_DOMESTIC"
+          transaction_code: "550008"
+          description: "Card transaction via POS channel, where the card's magnetic stripe was swiped, - within the country the account is held."
+        - transaction_action: "CARD_CONTACTLESS_INTERNATIONAL"
+          transaction_code: "550009"
+          description: "Card transaction via POS channel, where the card was tapped against a contactless reader, - outside of the country the account is held."
+        - transaction_action: "CARD_CONTACTLESS_DOMESTIC"
+          transaction_code: "550010"
+          description: "Card transaction via POS channel, where the card was tapped against a contactless reader, - within the country the account is held."
+
+        - transaction_action: "CARD_ECOMMERCE_DOMESTIC"
+          transaction_code: "550011"
+          description: "Card transaction via Ecom channel for an Online Purchase - outside of the country the account is held."
+        - transaction_action: "CARD_ECOMMERCE_INTERNATIONAL"
+          transaction_code: "550012"
+          description: "Card transaction via Ecom channel for an Online Purchase - within the country the account is held."
+
+        - transaction_action: "CARD_UNSOLICITED_DEBIT_CLEARING_DOMESTIC"
+          transaction_code: "550013"
+          description: "A debit to the card, initiated without user's explicit authorization, and processed through a clearing system - within the country the account is held."
+        - transaction_action: "CARD_UNSOLICITED_DEBIT_CLEARING_INTERNATIONAL"
+          transaction_code: "550014"
+          description: "A debit to the card, initiated without user's explicit authorization, and processed through a clearing system - outside of the country the account is held."
+        - transaction_action: "CARD_UNSOLICITED_CREDIT_CLEARING_DOMESTIC"
+          transaction_code: "550015"
+          description: "A credit to the card, initiated without user's explicit authorization, and processed through a clearing system - within the country the account is held."
+        - transaction_action: "CARD_UNSOLICITED_CREDIT_CLEARING_INTERNATIONAL"
+          transaction_code: "550016"
+          description: "A credit to the card, initiated without user's explicit authorization, and processed through a clearing system - outside of the country the account is held."

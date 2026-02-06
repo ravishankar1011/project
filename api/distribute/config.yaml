@@ -1,0 +1,16 @@
+# DISTRIBUTE_ENDPOINT: https://int-api-atlas-engagement-st01.hugohub.com
+#DISTRIBUTE_ENDPOINT: https://int-api-atlas-engagement-st01.hugohub.com
+
+#DISTRIBUTE_ENDPOINT: https://test-api-sg-engagement-st01.cdvwealth.com
+#app-build-version: "2025060901"
+#customer_profile_id: "07651956-706a-47f3-ac69-595b26cd60f8"
+
+#DISTRIBUTE_ENDPOINT: https://test-api-sg-engagement-st01.hugosave.com
+#app-build-version: "2025060901"
+#customer_profile_id: "07651956-706a-47f3-ac69-595b26cd60f8"
+
+DISTRIBUTE_ENDPOINT: https://test-api-pk-engagement-st01.hugobank.com.pk
+app-build-version: "2025060901"
+customer_profile_id: "b3ec4035-80d5-4bca-880f-5606284753f6"
+
+#DISTRIBUTE_ENDPOINT: https://dev-api-atlas-engagement-hugosave.atlasconsolidated.com

@@ -1,0 +1,21 @@
+service:
+  service_name: "CARD_SERVICE"
+  products:
+    - product_code: "CARD_PRODUCT_CARD_ACCOUNT"
+      end_product_code: "CDA"
+      provider_id: "CLOWD9"
+      profile_type: "END_CUSTOMER"
+      product_class: "SHARIAH"
+      product_type: "CARD_ACCOUNT"
+      product_access_type: "SYSTEM_ONLY"
+      product_name: "EndCustomer Card Account"
+      product_description: "EndCustomer Card Account"
+      card_account_params:
+        create_funding_account: false
+        fund_provider: "CASH"
+        fund_provider_product_code: "CASH_PRODUCT_ACCOUNT_CARD"
+        number_of_active_accounts: 1
+        number_of_physical_cards_per_account: 5
+        number_of_virtual_cards_per_account: 0
+        number_of_active_physical_cards_per_account: 1
+        number_of_active_virtual_cards_per_account: 0

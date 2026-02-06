@@ -1,0 +1,13 @@
+import tests.api.portal.uims.page_steps
+import tests.api.portal.uims.auth_steps
+import tests.api.portal.uims.user_steps
+import tests.api.portal.uims.customer_profile_steps
+import tests.api.portal.uims.permission_steps
+import tests.api.portal.uims.group_steps
+import tests.api.portal.uims.maker_chcker_flow_steps
+import tests.api.portal.uims.widget_steps
+import tests.api.portal.uims.resource_steps
+import tests.api.portal.uims.page_steps
+import tests.api.portal.uims.role_steps
+import tests.api.portal.uims.data_steps
+import tests.api.portal.uims.draft_step

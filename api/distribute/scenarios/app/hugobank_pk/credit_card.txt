@@ -1,0 +1,358 @@
+-----------------Response After Successful Ordering Credit Card---------------------
+changes made in:-
+1) in app_helper.py  -> get user profile ID ,
+
+
+Card Ordering Imp Notes:-
+1) we do not send card_account_id while ordering card
+2)
+
+{
+  'headers': {
+    'statusCode': '200',
+    'message': 'Success',
+    'otelTraceId': '600dbd087cc51251cf7a9d65e56d1322'
+  },
+  'data': {
+    '@type': 'type.googleapis.com/com.atlas.distribute.app.api.card.UserCardDTO',
+    'cardId': '8fb71890-f20b-440f-9f6f-54b1f846de7c',
+    'cardAccountId': 'ce6e31f1-9eea-4bc3-9b36-9628d13db7c5',
+    'nameOnCard': 'John Doe',
+    'cardStatus': 'CARD_STATUS_PENDING',
+    'adminBlocked': False,
+    'cardType': 'PHYSICAL',
+    'scheme': '',
+    'category': 'CREDIT_CARD',
+    'cardLabel': '',
+    'panLength': 0,
+    'isExpiringSoon': False,
+    'userActionDetails': {},
+    'isCardTriggerForRoundup': False
+  }
+}
+
+
+------------------------Card status Upgraded-----------------------------------------------------------
+{
+  'headers': {
+    'statusCode': '200',
+    'message': 'Success',
+    'otelTraceId': '8425ef8b508b2880c9decbb1e056a154'
+  },
+  'data': {
+    '@type': 'type.googleapis.com/com.atlas.distribute.app.api.card.GetCardsResponseDTO',
+    'userProfileId': '604050a9-a347-4764-a576-37325nonprod',
+    'cards': [
+      {
+        'cardId': '6515c7ab-23f3-4757-a6dc-2794a68584a1',
+        'cardAccountId': '24fb319e-5d4f-4714-b539-58d651eded49',
+        'nameOnCard': 'John Doe',
+        'cardStatus': 'CARD_STATUS_UPGRADED',
+        'adminBlocked': False,
+        'cardType': 'PHYSICAL',
+        'scheme': 'VISA',
+        'category': 'CREDIT_CARD',
+        'cardLabel': 'Visa Physical Credit Card',
+        'panLength': 16,
+        'cardLast4Digits': '1234',
+        'cardTxnChannelDetails': {
+          'cardId': '6515c7ab-23f3-4757-a6dc-2794a68584a1',
+          'channelDetails': [
+            {
+              'channel': 'POS',
+              'channelStatus': {
+                'posStatus': {
+                  'enabled': True,
+                  'localEnabled': True,
+                  'internationalEnabled': False
+                }
+              },
+              'cardLimitDetails': {
+                'limitId': '33a419ef-e840-4f42-b988-d6dcfed37b1e',
+                'accountId': '6515c7ab-23f3-4757-a6dc-2794a68584a1',
+                'limitWindow': {
+                  'type': 'CALENDER_DAY',
+                  'value': 1
+                },
+                'minValue': 0.0,
+                'maxValue': 200000.0,
+                'userSetValue': 200000.0,
+                'currentSpentValue': 0.0,
+                'isEditable': True,
+                'isCumulativeLimit': True,
+                'isHardLimit': True,
+                'displayTitle': '',
+                'displayText': '',
+                'limitUsageStatus': 'LIMIT_USAGE_WITHIN_SAFE'
+              }
+            },
+            {
+              'channel': 'E_COMMERCE',
+              'channelStatus': {
+                'ecomStatus': {
+                  'enabled': True,
+                  'localEnabled': True,
+                  'internationalEnabled': False
+                }
+              },
+              'cardLimitDetails': {
+                'limitId': '0566baad-6059-4ca1-a9db-30bd2f40ae5e',
+                'accountId': '6515c7ab-23f3-4757-a6dc-2794a68584a1',
+                'limitWindow': {
+                  'type': 'CALENDER_DAY',
+                  'value': 1
+                },
+                'minValue': 0.0,
+                'maxValue': 200000.0,
+                'userSetValue': 200000.0,
+                'currentSpentValue': 0.0,
+                'isEditable': True,
+                'isCumulativeLimit': True,
+                'isHardLimit': True,
+                'displayTitle': '',
+                'displayText': '',
+                'limitUsageStatus': 'LIMIT_USAGE_WITHIN_SAFE'
+              }
+            },
+            {
+              'channel': 'ATM',
+              'channelStatus': {
+                'atmStatus': {
+                  'enabled': True,
+                  'localEnabled': True,
+                  'internationalEnabled': False
+                }
+              },
+              'cardLimitDetails': {
+                'limitId': 'b91b958c-5233-47d8-a664-758d0bcddfbe',
+                'accountId': '6515c7ab-23f3-4757-a6dc-2794a68584a1',
+                'limitWindow': {
+                  'type': 'CALENDER_DAY',
+                  'value': 1
+                },
+                'minValue': 0.0,
+                'maxValue': 100000.0,
+                'userSetValue': 100000.0,
+                'currentSpentValue': 0.0,
+                'isEditable': True,
+                'isCumulativeLimit': True,
+                'isHardLimit': True,
+                'displayTitle': '',
+                'displayText': '',
+                'limitUsageStatus': 'LIMIT_USAGE_WITHIN_SAFE'
+              }
+            }
+          ]
+        },
+        'isExpiringSoon': False,
+        'userActionDetails': {
+          'DISABLE': 'ALLOWED',
+          'UNBLOCK': 'NOT_ALLOWED',
+          'BLOCK': 'ALLOWED'
+        },
+        'isCardTriggerForRoundup': False
+      }
+    ]
+  }
+}
+
+
+
+-----------------------------User details--------------------------------------------
+{
+  'headers': {
+    'statusCode': '200',
+    'message': 'Success',
+    'otelTraceId': '941238282e2e8bed3bb935a7ea1e6c3b'
+  },
+  'data': {
+    '@type': 'type.googleapis.com/com.atlas.distribute.profile.api.dto.userprofile.UserDetailsDTO',
+    'orgId': 'HUGOBANK_PK',
+    'userProfileId': '969ba0e1-76f5-4468-93f6-37398nonprod',
+    'endUserProfileId': '4d833625-9782-4257-a468-4798a02b7db0',
+    'accountType': 'PERSONAL',
+    'userStatus': 'PROFILE_ACTIVE',
+    'adminBlocked': False,
+    'email': '',
+    'phoneNumber': '+3739861926431',
+    'userName': '+3739861926431',
+    'userNameType': 'PHONE_NUMBER',
+    'name': 'Johnny',
+    'legalName': 'John Doe',
+    'guardianName': '',
+    'dob': '1984-01-30',
+    'nationality': 'Pakistan',
+    'phase': 'LIVE',
+    'referralCode': '0UcxWFF1cM-adv',
+    'cardName': '',
+    'userState': {
+      'accountLevel': 'L2',
+      'accountLevelIndex': 2,
+      'loadAmount': 0.0,
+      'loadLimit': 9.223372036854776e+18,
+      'receivedPaymentsCount': '1',
+      'cardRequested': True,
+      'cardAccountActive': True,
+      'trustVerified': False,
+      'suitabilityScore': 0.0
+    },
+    'referralLink': 'https://nonprod-code.hugobank.com.pk/ref/0UcxWFF1cM-adv',
+    'clientFlags': {},
+    'serverFlags': {},
+    'settings': {
+      'theme': 'GREEN_GLOW',
+      'themeMode': 'LIGHT',
+      'language': 'ENGLISH',
+      'shariahComplianceEnabled': False,
+      'securityNotificationsEnabled': True,
+      'promotionNotificationPreferences': {
+        'promotionNotificationsEnabled': True,
+        'newProductLaunchesEnabled': True,
+        'limitedTimePromotionsEnabled': True,
+        'partnerOffersEnabled': True
+      },
+      'documentFrequencies': {
+        'TRANSACTION_STATEMENT': 'HALF_YEARLY'
+      }
+    },
+    'userTransition': {
+      'plusSwitchTs': '2026-01-30T12:08:16.033343Z',
+      'premiumSwitchTs': '2026-01-30T12:08:16.033343Z'
+    },
+    'addresses': [
+      {
+        'addressLine1': '5220 Fidel Tunnel, Multan, gilgit-baltistan, 44000, Pakistan',
+        'addressLine2': '',
+        'addressLine3': '',
+        'addressLine4': '',
+        'city': 'Islamabad',
+        'state': '',
+        'countryCode': 'PAK',
+        'localCode': '',
+        'isMailingAddress': False,
+        'addressType': 'CURRENT_ADDRESS'
+      },
+      {
+        'addressLine1': '792 Bari Cliffs, Multan, azad kashmir, 46000, Pakistan',
+        'addressLine2': '',
+        'addressLine3': '',
+        'addressLine4': '',
+        'city': 'Faisalabad',
+        'state': '',
+        'countryCode': 'PAK',
+        'localCode': '',
+        'isMailingAddress': False,
+        'addressType': 'PERMANENT_ADDRESS'
+      }
+    ],
+    'gender': 'FEMALE',
+    'riskScore': {
+      'riskScore': 44.375,
+      'riskScores': [
+        {
+          'score': 44.375,
+          'keyScores': {
+            'age': 5.0,
+            'sector': 5.0,
+            'technology': 5.0,
+            'residence_city': 3.75,
+            'account_category': 11.25,
+            'delivery_channel': 5.0,
+            'country_of_residence': 1.875,
+            'country_of_nationality': 7.5
+          },
+          'pkRequestData': {
+            'age': 42.0,
+            'countryOfBirth': 'Kabul',
+            'countryOfNationality': 'Pakistan',
+            'countryOfResidence': 'Pakistan',
+            'accountCategory': 'SAVING ACCOUNT - INDIVIDUAL',
+            'sector': 'Individual',
+            'technology': 'VERIFIED',
+            'annualTc': '',
+            'annualTd': '',
+            'residenceCity': 'ISLAMABAD',
+            'deliveryChannel': 'CREDIT/DEBIT CARDS',
+            'occupationIndividual': ''
+          },
+          'riskScoreCategory': 'PROFILE'
+        }
+      ],
+      'scoreOverridden': False
+    },
+    'nationalId': {
+      'documentType': 'CNIC',
+      'documentValue': '8741769774738',
+      'issueDate': '2023-01-30',
+      'expiryDate': '2035-01-30',
+      'issuingCountry': 'PAK'
+    },
+    'taxId': {
+      'documentType': 'CNIC',
+      'documentValue': '8741769774738',
+      'issueDate': '2023-01-30',
+      'expiryDate': '2035-01-30',
+      'issuingCountry': 'PAK'
+    },
+    'isNewMandateAllowed': False,
+    'adminBlockedByRole': 'UNKNOWN_ROLE',
+    'userTags': [],
+    'attributes': {},
+    'isOnshore': False,
+    'createTs': '2026-01-30T12:05:36.857208Z',
+    'updateTs': '2026-01-30T12:09:11.375351Z',
+    'firstName': 'John Doe',
+    'lastName': '',
+    'metadata': {
+      'data': [
+        {
+          'key': 'national_id',
+          'documentDetails': {
+            'documentType': 'CNIC',
+            'documentValue': '8741769774738',
+            'issueDate': '2023-01-30',
+            'expiryDate': '2035-01-30',
+            'issuingCountry': 'PAK'
+          }
+        },
+        {
+          'key': 'tax_id',
+          'documentDetails': {
+            'documentType': 'CNIC',
+            'documentValue': '8741769774738',
+            'issueDate': '2023-01-30',
+            'expiryDate': '2035-01-30',
+            'issuingCountry': 'PAK'
+          }
+        },
+        {
+          'key': 'guardian_name',
+          'stringValue': ''
+        }
+      ]
+    }
+  }
+}
+
+--------------------------Credit card account details-----------------------------------------------------------
+{
+  'headers': {
+    'statusCode': '200',
+    'message': 'Success',
+    'otelTraceId': '1ecdaa10d128449b87478a6051e9cfb7'
+  },
+  'data': {
+    '@type': 'type.googleapis.com/com.atlas.distribute.app.api.credit.CreditAccountsDTO',
+    'creditAccounts': [
+      {
+        'creditAccountId': '53a8d4f0-77fa-4dec-a2db-857919cdb874',
+        'accountNumber': '9946056682947922',
+        'accountName': 'Credit Account',
+        'productCode': 'CREDIT_ACCOUNT_SECURED_CREDIT_CARD_PRODUCT',
+        'approvedLimit': 6000.0,
+        'accountStatus': 'ACCOUNT_CREATED',
+        'adminBlocked': False
+      }
+    ]
+  }
+}

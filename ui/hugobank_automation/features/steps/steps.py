@@ -1,0 +1,11 @@
+import tests.ui.hugobank_automation.steps_definition.onboarding
+import tests.ui.hugobank_automation.steps_definition.virtual_cards
+import tests.ui.hugobank_automation.steps_definition.savings_pot
+#import tests.ui.hugobank_automation.steps_definition.physical_card
+import tests.ui.hugobank_automation.steps_definition.payee
+import tests.ui.hugobank_automation.steps_definition.plus_onboarding
+import tests.ui.hugobank_automation.steps_definition.login
+
+
+import tests.ui.hugobank_automation.steps_definition.billsPayments
+import tests.ui.hugobank_automation.steps_definition.billsPayments
