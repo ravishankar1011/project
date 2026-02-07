@@ -212,36 +212,38 @@ def check_available_credit(context, uid, checks):
 
     credit_account_id = context.data["users"][uid]["credit_accounts"][0]["creditAccountId"]
 
-    response = request.hugosave_get_request(
-        path=ah.cms_urls["balance"].replace("{account-id}", credit_account_id),
-        headers=ah.get_user_header(context, uid),
-    )
+    amount = 0.0
+    precision = ""
+    amount_checks_list = checks.split(" ")
 
-    if check_status_distribute(response, 200):
-        available_credit_balance = response["data"]["availableCredit"]
+    for item in amount_checks_list:
+        try:
+            amount = float(item)
+        except ValueError:
+            if item == "approx" or item == "exact":
+                precision = item
 
-        amount = 0.0
-        precision = ""
-        amount_checks_list = checks.split(" ")
+    @retry(AssertionError, tries=40, delay=20, logger=None)
+    def retry_for_available_credit():
+        response = request.hugosave_get_request(
+            path=ah.cms_urls["balance"].replace("{account-id}", credit_account_id),
+            headers=ah.get_user_header(context, uid),
+        )
 
-        for item in amount_checks_list:
-            try:
-                amount = float(item)
-            except ValueError:
-                if item == "approx" or item == "exact":
-                    precision = item
+        if check_status_distribute(response, 200):
+            available_credit_balance = response["data"]["availableCredit"]
 
-        if precision == "approx":
-            assert amount - 1 <= available_credit_balance <= amount + 1, \
-                f"Approx check failed! Expected ~{amount}, but got {available_credit_balance}"
-        elif precision == "exact":
-            assert available_credit_balance == amount, \
-                f"Exact check failed! Expected {amount}, but got {available_credit_balance}"
-        else:
-            assert available_credit_balance == amount, f"Comparison failed! Got {available_credit_balance}"
+            if precision == "approx":
+                assert amount - 1 <= available_credit_balance <= amount + 1, \
+                    f"Approx check failed! Expected ~{amount}, but got {available_credit_balance}"
+            elif precision == "exact":
+                assert available_credit_balance == amount, \
+                    f"Exact check failed! Expected {amount}, but got {available_credit_balance}"
+            else:
+                assert available_credit_balance == amount, \
+                    f"Comparison failed! Got {available_credit_balance}"
 
-        # Optional:We can Save the verified balance back to context for future steps
-        # context.data["users"][uid]["available_credit_limit"] = available_credit_balance
+    retry_for_available_credit()
 
 @Step("I get card transaction channel limits for user ([^']*) and expect status code ([^']*)")
 def get_card_txn_channel_limits(context, uid: str, expected_status_code: str):
@@ -439,6 +441,83 @@ def update_credit_limit(context, uid, expected_status_code):
     #     "limit_to_increase": limit_to_increase,
     #     "required_lien_amount": required_lien_amount,
     # }
+
+@Step("I get cash advance limit for credit account of user ([^']*) and expect a status code of ([^']*)")
+def get_cash_advance_limit(context, uid, expected_status_code):
+    request = context.request
+
+    credit_accounts = context.data["users"][uid]["credit_accounts"]
+    credit_account = credit_accounts[0]
+    account_id = credit_account["creditAccountId"]
+
+    response = request.hugosave_get_request(
+        path=ah.credit_card_urls["get_cash_advance_limit"].replace(
+            "{account-id}", account_id
+        ),
+        headers=ah.get_user_header(context, uid),
+    )
+
+    assert check_status_distribute(response, expected_status_code), (
+        f"Expected {expected_status_code}, received: {response}"
+    )
+
+    assert "data" in response, f"Missing data in response: {response}"
+
+    context.data["users"][uid]["cash_advance_limit"] = response["data"]
+
+
+@Step("I validate cash advance eligibility for user ([^']*)")
+def validate_cash_advance_eligibility(context, uid):
+    row = context.table.rows[0]
+    requested_amount = float(row["cash_advance_amount"])
+
+    limit_data = context.data["users"][uid]["cash_advance_limit"]
+
+    available_limit = float(
+        limit_data.get("availableLimit", limit_data.get("maxLimit"))
+    )
+
+    assert requested_amount <= available_limit, (
+        f"Requested cash advance {requested_amount} exceeds available limit {available_limit}"
+    )
+
+    # print("--------context structure-------------", context.data)
+
+
+@Step("I request cash advance for credit account of user ([^']*) and expect a status code of ([^']*)")
+def request_cash_advance(context, uid, expected_status_code):
+    request = context.request
+
+    row = context.table.rows[0]
+    requested_amount = float(row["cash_advance_amount"])
+
+    credit_accounts = context.data["users"][uid]["credit_accounts"]
+    credit_account = credit_accounts[0]
+    account_id = credit_account["creditAccountId"]
+
+    default_cash_wallet_id = context.data["users"][uid]["cashBalances"][0]["cashWalletId"]
+
+    payload = {
+        "amount": requested_amount,
+        "cashWalletId": default_cash_wallet_id,
+    }
+
+    headers = ah.get_user_header(context, uid)
+    headers["x-final-user-authorisation-token"] = context.data["users"][uid][
+        "user_authorisation_token"
+    ]
+
+    response = request.hugosave_post_request(
+        path=ah.credit_card_urls["request_cash_advance"].replace(
+            "{account-id}", account_id
+        ),
+        data=payload,
+        headers=headers,
+    )
+
+    assert check_status_distribute(response, expected_status_code), (
+        f"Expected {expected_status_code}, received: {response}"
+    )
 
 
 ################################## Temporary files just for testing ################################################

@@ -163,7 +163,9 @@ card_urls = {
 credit_card_urls = {
     "get_product_config": "/app/v2/credit-account/product-config/CREDIT_ACCOUNT_SECURED_CREDIT_CARD_PRODUCT",
     "show_card_pin": app_base_url + "/card/{card-id}/show-pin",
-    "update_credit_limit" : app_base_url + "/credit-account/{account-id}/credit-limit"
+    "update_credit_limit" : app_base_url + "/credit-account/{account-id}/credit-limit",
+    "get_cash_advance_limit": app_base_url + "/credit-account/{account-id}/cash-advance-limit",
+    "request_cash_advance": app_base_url + "/credit-account/{account-id}/cash-advance",
 }
 
 progress_onboarding_urls = {

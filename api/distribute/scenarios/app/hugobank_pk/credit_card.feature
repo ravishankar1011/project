@@ -403,12 +403,15 @@ Feature: Credit_card feature
 #    Then I get card transaction channel limits for user UID1 and expect status code 200
 #    Then I fetch credit account balance for user UID1
 
-#    Then I fetch credit account list for user UID1
-#    Then I fetch credit account balance for user UID1
+    Then I fetch credit account list for user UID1
+    Then I fetch credit account balance for user UID1
 
 #    Then I fetch credit card constants for HUGOBANK
 
-#    And I check the balance of the wallet with product code CASH_WALLET_CURRENT for user UID1 and the balance should be 61300 PKR exact
+#    And I check the balance of the wallet with product code CASH_WALLET_CURRENT for user UID1 and the balance should be 26500 PKR exact
+
+# -------------------------------------------------------------------------------------
+
 
 
 
@@ -564,3 +567,45 @@ Feature: Credit_card feature
 
     And I check the balance of the wallet with product code CASH_WALLET_CURRENT for user UID1 and the balance should be 26500 PKR exact
 
+  Scenario: Credit card cash advance scenario
+    #------------I assume credit card is ordered and active----------------------------
+
+         # Check current account balance and available credit before request
+    And I check the available credits for user UID1 and available credit should be 23480 approx
+
+    And I check the balance of the wallet with product code CASH_WALLET_CURRENT for user UID1 and the balance should be 28500 PKR exact
+
+    # Fetch cash advance limit for credit account
+    Then I get cash advance limit for credit account of user UID1 and expect a status code of 200
+
+
+    # Validate requested cash advance amount is within limit
+    And I validate cash advance eligibility for user UID1
+      | cash_advance_amount  |
+      | 2000                 |
+
+
+    # Authorisation for cash advance
+    Then I initiate the initial user authorisation to REQUEST_CASH_ADVANCE for user UID1 and expect a status of USER_AUTHORISATION_SUCCESS
+
+    Then I initiate the final user authorisation to REQUEST_CASH_ADVANCE and expect a user authorisation status as USER_AUTHORISATION_INITIATED for user UID1
+
+    And I initiate the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_INITIATED
+
+    Then I process the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_PROCESSED
+
+    And I submit the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_SUCCESSFUL
+
+    Then I submit the final user authorisation for REQUEST_CASH_ADVANCE of user UID1 and expect a status USER_AUTHORISATION_SUBMITTED
+
+    And I get the final user authorisation token for REQUEST_CASH_ADVANCE of user UID1 and expect a status USER_AUTHORISATION_SUCCESS
+
+    # Request cash advance
+    Then I request cash advance for credit account of user UID1 and expect a status code of 200
+      | cash_advance_amount |
+      | 2000                |
+
+    # Check current account balance and available credit after request
+    And I check the available credits for user UID1 and available credit should be 20330 approx
+
+    And I check the balance of the wallet with product code CASH_WALLET_CURRENT for user UID1 and the balance should be 30500 PKR exact
