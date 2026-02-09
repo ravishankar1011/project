@@ -178,7 +178,24 @@
     And I check the balance of the wallet with product code CASH_WALLET_CURRENT for user UID1 and the balance should be 30500 PKR exact
 
 
+------------------Credit card bills related scenarios-----------------------------------
+#------------I assume credit card is ordered and active----------------------------
+#    Then I generate credit account bill for user UID1 and expect status code 200
+#    Then I get the credit account bills for user UID1 and expect status code 200
+#    Then I get the latest credit account bill for user UID1 and expect status code 200 and bill present as true
+#    Then I get the latest credit account bill for user UID1 and expect status code 200 and bill present as false
 
+    Then I pay credit account bill for user UID1 with amount 100 and expect status code 200 and intent status as PENDING
+
+    And I check the available credits for user UID1 and available credit should be 30530 approx
+
+    And I check the balance of the wallet with product code CASH_WALLET_CURRENT for user UID1 and the balance should be 20300 PKR exact
+
+##    ------------------user pays full bill amount---------------------------
+#    Then I pay credit account bill for user UID1 with full bill amount and expect status code 200 and intent status as PENDING
+#
+#    #    ------------------user pays excess than bill amount---------------------------
+#    Then I pay credit account bill for user UID1 with excess bill amount and expect status code 200 and intent status as PENDING
 
 
 

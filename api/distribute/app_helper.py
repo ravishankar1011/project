@@ -161,11 +161,15 @@ card_urls = {
 }
 # Credit Card related URLs
 credit_card_urls = {
-    "get_product_config": "/app/v2/credit-account/product-config/CREDIT_ACCOUNT_SECURED_CREDIT_CARD_PRODUCT",
+    "get_product_config": app_base_url + "/credit-account/product-config/CREDIT_ACCOUNT_SECURED_CREDIT_CARD_PRODUCT",
     "show_card_pin": app_base_url + "/card/{card-id}/show-pin",
     "update_credit_limit" : app_base_url + "/credit-account/{account-id}/credit-limit",
     "get_cash_advance_limit": app_base_url + "/credit-account/{account-id}/cash-advance-limit",
     "request_cash_advance": app_base_url + "/credit-account/{account-id}/cash-advance",
+    "get_credit_account_bills": app_base_url + "/credit-account/{account-id}/bills",
+    "get_credit_account_latest_bill": app_base_url + "/credit-account/{account-id}/latest-bill",
+    "pay_credit_account_bill": app_base_url + "/credit-account/{account-id}/pay-bill",
+    "close_credit_account" : app_base_url + "credit-account/{account-id}/close",
 }
 
 progress_onboarding_urls = {
@@ -482,24 +486,24 @@ def get_auth_header(uid, context):
     }
 
 #
-# def get_user_profile_id(uid, context):
-#     try:
-#         return context.data["users"][uid]["create_new_user_response"]["userProfileId"]
-#     except Exception:
-#         return ""
-# --------------------------Just for testing purpose----------------------------------------------
 def get_user_profile_id(uid, context):
-    user = context.data["users"][uid]
-
-    # Existing user (loaded from JSON)
-    if "userProfileId" in user:
-        return user["userProfileId"]
-
-    # Newly created user
-    if "create_new_user_response" in user:
-        return user["create_new_user_response"]["userProfileId"]
-
-    raise Exception(f"userProfileId not found for user {uid}")
+    try:
+        return context.data["users"][uid]["create_new_user_response"]["userProfileId"]
+    except Exception:
+        return ""
+# --------------------------Just for testing purpose----------------------------------------------
+# def get_user_profile_id(uid, context):
+#     user = context.data["users"][uid]
+#
+#     # Existing user (loaded from JSON)
+#     if "userProfileId" in user:
+#         return user["userProfileId"]
+#
+#     # Newly created user
+#     if "create_new_user_response" in user:
+#         return user["create_new_user_response"]["userProfileId"]
+#
+#     raise Exception(f"userProfileId not found for user {uid}")
 
 # ------------------------------------------------------------------------
 

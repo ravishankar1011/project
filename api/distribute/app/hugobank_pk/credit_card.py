@@ -519,6 +519,149 @@ def request_cash_advance(context, uid, expected_status_code):
         f"Expected {expected_status_code}, received: {response}"
     )
 
+@Step("I generate credit account bill for user ([^']*) and expect status code ([^']*)")
+def generate_credit_account_bill(context, uid, expected_status_code):
+    request = context.request
+
+    credit_account = context.data["users"][uid]["credit_accounts"][0]
+    account_id = credit_account["creditAccountId"]
+
+    response = request.hugosave_post_request(
+        path=ah.dev_urls["generate_credit_bills"],
+        data={
+            "creditAccountId": account_id
+        },
+        headers=ah.get_user_header(context, uid),
+    )
+
+    assert check_status_distribute(response, expected_status_code), (
+        f"Expected {expected_status_code}, received: {response}"
+    )
+
+    context.data["users"][uid]["generated_credit_bill_response"] = response
+
+@Step("I get the credit account bills for user ([^']*) and expect status code ([^']*)")
+def get_credit_account_bills(context, uid, expected_status_code):
+    request = context.request
+
+    credit_accounts = context.data["users"][uid]["credit_accounts"]
+    credit_account = credit_accounts[0]
+    account_id = credit_account["creditAccountId"]
+
+    response = request.hugosave_get_request(
+        path=ah.credit_card_urls["get_credit_account_bills"].replace(
+            "{account-id}", account_id
+        ),
+        headers=ah.get_user_header(context, uid),
+    )
+
+    assert check_status_distribute(response, expected_status_code), (
+        f"Expected {expected_status_code}, received: {response}"
+    )
+
+    assert "data" in response, f"Missing data in response: {response}"
+
+    context.data["users"][uid]["credit_account_bills"] = response["data"]
+
+@Step("I get the latest credit account bill for user ([^']*) and expect status code ([^']*) and bill present as ([^']*)")
+def get_latest_credit_account_bill(context, uid, expected_status_code, expected_bill_present):
+    request = context.request
+
+    credit_account = context.data["users"][uid]["credit_accounts"][0]
+    account_id = credit_account["creditAccountId"]
+
+    response = request.hugosave_get_request(
+        path=ah.credit_card_urls["get_credit_account_latest_bill"].replace(
+            "{account-id}", account_id
+        ),
+        headers=ah.get_user_header(context, uid),
+    )
+
+    assert check_status_distribute(response, expected_status_code), (
+        f"Expected {expected_status_code}, received: {response}"
+    )
+
+    bill_data = response.get("data")
+    assert bill_data is not None, f"Missing data in response: {response}"
+
+    expected_bill_present = expected_bill_present.lower() == "true"
+
+    assert bill_data.get("billPresent") is expected_bill_present, (
+        f"Expected billPresent {expected_bill_present}, received: {bill_data}"
+    )
+
+    context.data["users"][uid]["latest_credit_account_bill"] = bill_data
+
+@Step("I pay credit account bill for user ([^']*) with amount ([^']*) and expect status code ([^']*) and intent status as ([^']*)")
+def pay_credit_account_bill_with_amount(context, uid, amount, expected_status_code, expected_intent_status):
+    request = context.request
+
+    user_data = context.data["users"][uid]
+
+    credit_account = user_data["credit_accounts"][0]
+    credit_account_id = credit_account["creditAccountId"]
+
+    cash_wallet = user_data["cashBalances"][0]
+    cash_wallet_id = cash_wallet["cashWalletId"]
+
+    payload = {
+        "amount": float(amount),
+        "cashWalletId": cash_wallet_id
+    }
+
+    response = request.hugosave_post_request(
+        path=ah.credit_card_urls["pay_credit_account_bill"].replace(
+            "{account-id}", credit_account_id
+        ),
+        headers=ah.get_user_header(context, uid),
+        data=payload,
+    )
+
+    assert check_status_distribute(response, expected_status_code), (
+        f"Expected {expected_status_code}, received: {response}"
+    )
+
+    response_data = response.get("data")
+    assert response_data is not None, f"Missing data in response: {response}"
+
+    assert response_data.get("status") == expected_intent_status, (
+        f"Expected intent status {expected_intent_status}, received: {response_data}"
+    )
+
+    assert response_data.get("intentId"), (
+        f"Missing intentId in response: {response_data}"
+    )
+
+    # can store response in context for future use
+    # context.data["users"][uid]["pay_credit_account_bill_intent"] = response_data
+
+@Step("I close credit account for user ([^']*) using settlement source ([^']*) and expect status code ([^']*)")
+def close_credit_account(context, uid, settlement_source, expected_status_code):
+    request = context.request
+
+    user_data = context.data["users"][uid]
+
+    credit_account = user_data["credit_accounts"][0]
+    credit_account_id = credit_account["creditAccountId"]
+
+    response = request.hugosave_delete_request(
+        path=ah.credit_card_urls["close_credit_account"].replace(
+            "{account-id}", credit_account_id
+        ),
+        params={
+            "settlement-source": settlement_source
+        },
+        headers=ah.get_user_header(context, uid),
+    )
+
+    assert check_status_distribute(response, expected_status_code), (
+        f"Expected {expected_status_code}, received: {response}"
+    )
+
+    # Can store response in context
+    # context.data["users"][uid]["close_credit_account_response"] = response
+
+
 
 ################################## Temporary files just for testing ################################################
 
