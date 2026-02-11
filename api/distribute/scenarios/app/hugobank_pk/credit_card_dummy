@@ -202,6 +202,116 @@
 
 
 
+
+
+
+##############################################################################################
+
+#-------------------------------------------------------------------------------------------
+  Scenario: Fetch credit-related references data for existing PLUS user
+
+    Then I wait for card status as CARD_STATUS_ACTIVE to activate PHYSICAL card for user UID1
+    And I store activated card details for user UID1
+
+#    And I fetch card intents list for user UID1
+#    Then I get card transaction channel limits for user UID1 and expect status code 200
+#    Then I fetch credit account balance for user UID1
+
+    Then I fetch credit account list for user UID1
+    Then I fetch credit account balance for user UID1
+
+#    Then I fetch credit card constants for HUGOBANK
+#    And I check the balance of the wallet with product code CASH_WALLET_CURRENT for user UID1 and the balance should be 26500 PKR exact
+
+#  ---------------------credit bills related---------------------------------------------------
+#    Then I generate credit account bill for user UID1 and expect status code 200
+#    Then I get the credit account bills for user UID1 and expect status code 200
+#    Then I get the latest credit account bill for user UID1 and expect status code 200 and bill present as true
+#    Then I get the latest credit account bill for user UID1 and expect status code 200 and bill present as false
+
+    Then I pay credit account bill for user UID1 with amount 100 and expect status code 200 and intent status as PENDING
+
+    And I check the available credits for user UID1 and available credit should be 30530 approx
+
+    And I check the balance of the wallet with product code CASH_WALLET_CURRENT for user UID1 and the balance should be 20300 PKR exact
+
+  Scenario: Credit card transactions without activation
+
+    Then I wait for card status as CARD_STATUS_UPGRADED to activate PHYSICAL card for user UID1
+
+#    ----------below line is just for testing------------------------
+    And I store activated card details for user UID1
+
+
+    # POS transaction — should succeed
+    Given I create below transaction for PHYSICAL card for user profile id and expect a status code of 200
+      | user_profile_identifier | transaction_permutation_name | billing_amount | is_foreign_txn | channel |
+      | UID1                    | AUTH_CLEAR                   | 500            | false          | POS     |
+
+#    And I check the balance of the wallet with product code CASH_WALLET_CURRENT for user UID1 and the balance should be 60800 PKR approx
+
+
+    # E-COMMERCE transaction — should succeed
+    Given I create below transaction for PHYSICAL card for user profile id and expect a status code of 200
+      | user_profile_identifier | transaction_permutation_name | billing_amount | is_foreign_txn | channel    |
+      | UID1                    | AUTH_CLEAR                   | 500            | false          | E_COMMERCE |
+
+#    And I check the balance of the wallet with product code CASH_WALLET_CURRENT for user UID1 and the balance should be 60300 PKR approx
+
+    # ATM transaction — should fail
+    Given I create below transaction for PHYSICAL card for user profile id and expect a status code of 200
+      | user_profile_identifier | transaction_permutation_name | billing_amount | is_foreign_txn | channel |
+      | UID1                    | AUTH_CLEAR                   | 500            | false          | ATM     |
+
+    Then I wait for card status as CARD_STATUS_UPGRADED to activate PHYSICAL card for user UID1
+
+  Scenario: Credit card transactions after activation
+
+    Then I initiate the initial user authorisation to ACTIVATE_CARD for user UID1 and expect a status of USER_AUTHORISATION_SUCCESS
+
+    Then I initiate the final user authorisation to ACTIVATE_CARD and expect a user authorisation status as USER_AUTHORISATION_INITIATED for user UID1
+
+    And I initiate the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_INITIATED
+
+    Then I process the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_PROCESSED
+
+    And I submit the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_SUCCESSFUL
+
+    Then I submit the final user authorisation for ACTIVATE_CARD of user UID1 and expect a status USER_AUTHORISATION_SUBMITTED
+
+    And I get the final user authorisation token for ACTIVATE_CARD of user UID1 and expect a status USER_AUTHORISATION_SUCCESS
+
+    Then I wait for card status as CARD_STATUS_UPGRADED to activate PHYSICAL card for user UID1
+
+    And I store activated card details for user UID1
+
+#    Then I wait for 40 seconds
+
+    Then I activate the PHYSICAL card for the user UID1 with valid token, with status 200
+
+    Then I check card status is CARD_STATUS_ACTIVE for user UID1 for PHYSICAL card
+
+    # POS transaction — should succeed
+    Given I create below transaction for PHYSICAL card for user profile id and expect a status code of 200
+      | user_profile_identifier | transaction_permutation_name | billing_amount | is_foreign_txn | channel |
+      | UID1                    | AUTH_CLEAR                   | 500            | false          | POS     |
+
+
+    # E-COMMERCE transaction — should succeed
+    Given I create below transaction for PHYSICAL card for user profile id and expect a status code of 200
+      | user_profile_identifier | transaction_permutation_name | billing_amount | is_foreign_txn | channel    |
+      | UID1                    | AUTH_CLEAR                   | 500            | false          | E_COMMERCE |
+
+
+    # ATM transaction — should succeed
+    Given I create below transaction for PHYSICAL card for user profile id and expect a status code of 200
+      | user_profile_identifier | transaction_permutation_name | billing_amount | is_foreign_txn | channel |
+      | UID1                    | AUTH_CLEAR                   | 500            | false          | ATM     |
+
+
+##############################################################################################
+
+
     #################################################################################################################################################
     -------------------------------dummy codes------------------------------------------------------
     # def check_available_credit(context, uid, checks):

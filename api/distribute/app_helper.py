@@ -1092,6 +1092,16 @@ def get_passcode_body(context, user_profile_identifier):
         )
     }
 
+def get_verify_income_details(context, uid):
+    return {
+        "data": json.dumps(
+            {
+                "source_category": "SPONSOR_STUDENT"
+            }
+        )
+    }
+
+
 
 def get_other_journey_body(context, user_profile_identifier):
     submit_session_id = context.data["users"][user_profile_identifier][

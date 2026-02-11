@@ -551,10 +551,10 @@ Feature: Credit_card feature
   Scenario: Credit card bills related scenarios
 
   #------------I assume credit card is ordered and active----------------------------
-#    Then I generate credit account bill for user UID1 and expect status code 200
-#    Then I get the credit account bills for user UID1 and expect status code 200
-#    Then I get the latest credit account bill for user UID1 and expect status code 200 and bill present as true
-#    Then I get the latest credit account bill for user UID1 and expect status code 200 and bill present as false
+    Then I generate credit account bill for user UID1 and expect status code 200
+    Then I get the credit account bills for user UID1 and expect status code 200
+    Then I get the latest credit account bill for user UID1 and expect status code 200 and bill present as true
+    Then I get the latest credit account bill for user UID1 and expect status code 200 and bill present as false
 
     Then I pay credit account bill for user UID1 with amount 100 and expect status code 200 and intent status as PENDING
 
