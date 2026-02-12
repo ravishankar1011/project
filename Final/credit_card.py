@@ -15,7 +15,7 @@ def fetch_credit_card_constants(context, customer):
     request = context.request
 
     if "users" not in context.data or not context.data["users"]:
-        raise Exception("Stopping test: No users found in context! CHECK 'Background' step fail?")
+        raise Exception("Stopping the test: No users found in context! CHECK 'Background' step fail?")
 
     uid = list(context.data["users"].keys())[0]
 
@@ -42,21 +42,21 @@ def fetch_credit_card_constants(context, customer):
         }
 
     optional_fields = [
-                 "annualFee",
-                 "annualPercentageRate",
-                 "latePaymentFee",
-                 "cashAdvanceFee",
-                 "atmWithdrawalFee",
-                 "fedOnFeesPercent",
-             ]
+        "annualFee",
+        "annualPercentageRate",
+        "latePaymentFee",
+        "cashAdvanceFee",
+        "atmWithdrawalFee",
+        "fedOnFeesPercent",
+    ]
 
     for field in optional_fields:
         if field in data:
             context.data["credit_card_constants"][field] = data[field]
 
+
 @step("I validate credit card eligibility using balance of the wallet with product code ([^']*) for user ([^']*)")
 def validate_eligibility(context,product_code, uid):
-    # uid = list(context.data["users"].keys())[0]
 
     requested_credit_limit = float(context.table[0]["credit_limit"])
 
@@ -82,9 +82,6 @@ def validate_eligibility(context,product_code, uid):
     print(f"Lien Factor: {lien_factor}")
     print(f"Required Lien Amount: {required_lien_amount}")
 
-    # ---------------------------------------------------------
-    print("Fetching fresh wallet balance from API...")
-
     request = context.request
     current_balance = 0.0
 
@@ -108,6 +105,7 @@ def validate_eligibility(context,product_code, uid):
         )
 
     print("SUCCESS: User is eligible for this credit limit.")
+
 
 @Step("I order a credit card for user ([^']*)")
 def order_credit_card(context, uid):
@@ -170,11 +168,12 @@ def order_credit_card(context, uid):
         context.data["cardOrderStatus"] = response["data"]
         context.data["users"][uid]["card_id"] = response["data"]["cardId"]
 
+
 @Step("I view the credit card PIN for user ([^']*) and expect the PIN to be returned successfully")
 def view_credit_card_pin(context, uid: str):
     request = context.request
 
-    card_id = context.data["users"][uid]["card_id"]
+    card_id = context.data["users"][uid]["credit_card"]["cardId"]
 
     headers = ah.get_user_header(context, uid)
 
@@ -202,9 +201,6 @@ def view_credit_card_pin(context, uid: str):
         f"Expected key in response, received: {data}"
     )
 
-
-    # We Can Store PIN if needed for further steps
-    # context.data["users"][uid]["card_pin"] = response["data"]["pin"]
 
 @Step("I check the available credits for user ([^']*) and available credit should be ([^']*)")
 def check_available_credit(context, uid, checks):
@@ -245,10 +241,11 @@ def check_available_credit(context, uid, checks):
 
     retry_for_available_credit()
 
+
 @Step("I get card transaction channel limits for user ([^']*) and expect status code ([^']*)")
 def get_card_txn_channel_limits(context, uid: str, expected_status_code: str):
     request = context.request
-    card_id = context.data["users"][uid]["card_id"]
+    card_id = context.data["users"][uid]["credit_card"]["cardId"]
 
     response = request.hugosave_get_request(
         path=ah.card_urls["get_limits"].replace("{card-id}", card_id),
@@ -261,23 +258,79 @@ def get_card_txn_channel_limits(context, uid: str, expected_status_code: str):
 
     assert "data" in response, f"Missing data in response: {response}"
 
-    context.data["users"][uid]["credit_accounts"] = (
-        context.data["users"][uid]["credit_accounts"]
-        if isinstance(context.data["users"][uid].get("credit_accounts"), dict)
-        else {}
-    )
-    context.data["users"][uid]["credit_accounts"]["channelDetails"] = response["data"]["channelDetails"]
+    credit_accounts = context.data["users"][uid].get("credit_accounts", [])
+
+    if not isinstance(credit_accounts, list) or not credit_accounts:
+        raise Exception("Credit accounts missing or invalid in context")
+
+    credit_accounts[0]["channelDetails"] = response["data"]["channelDetails"]
+
+
+@Step(
+    "I verified approved_limit for user ([^']*) and approved_limit should be ([^']*)"
+)
+def verify_approved_limit(context, uid: str, checks: str):
+
+    request = context.request
+
+    amount = 0.0
+    precision = ""
+
+    parts = checks.split(" ")
+    for item in parts:
+        try:
+            amount = float(item)
+        except ValueError:
+            if item in ["approx", "exact"]:
+                precision = item
+
+    @retry(AssertionError, tries=5, delay=20, logger=None)
+    def retry_for_approved_limit():
+
+        response = request.hugosave_get_request(
+            path=ah.user_profile_urls["credit-account-list"],
+            headers=ah.get_user_header(context, uid),
+        )
+
+        assert check_status_distribute(response, 200), (
+            f"Failed to fetch credit accounts. Response: {response}"
+        )
+
+        assert "data" in response and "creditAccounts" in response["data"], (
+            f"Missing creditAccounts in response: {response}"
+        )
+
+        credit_accounts = response["data"]["creditAccounts"]
+        assert credit_accounts, "No credit accounts found for user"
+
+        approved_limit = float(credit_accounts[0]["approvedLimit"])
+
+        if precision == "approx":
+            assert amount - 1 <= approved_limit <= amount + 1, (
+                f"Approx check failed! Expected ~{amount}, got {approved_limit}"
+            )
+        elif precision == "exact":
+            assert approved_limit == amount, (
+                f"Exact check failed! Expected {amount}, got {approved_limit}"
+            )
+        else:
+            assert approved_limit == amount, (
+                f"Comparison failed! Expected {amount}, got {approved_limit}"
+            )
+
+    retry_for_approved_limit()
+
 
 @Step("I update card limit for user ([^']*) and expect status code ([^']*)")
 def update_card_limit(context, uid: str, expected_status_code: str):
     request = context.request
-    card_id = context.data["users"][uid]["card_id"]
+    card_id = context.data["users"][uid]["credit_card"]["cardId"]
 
     row = context.table.rows[0]
     requested_limit_name = row["limit_id"]
     new_value = int(row["value"])
 
-    channel_details = context.data["users"][uid]["credit_accounts"]["channelDetails"]
+    channel_details = context.data["users"][uid]["credit_accounts"][0]["channelDetails"]
 
     resolved_limit_id = None
     for channel in channel_details:
@@ -308,15 +361,60 @@ def update_card_limit(context, uid: str, expected_status_code: str):
         f"Expected {expected_status_code}, received: {response}"
     )
 
+
+@Step("I verified the updated ([^']*) limit for user ([^']*) and limit should be ([^']*)")
+def verify_updated_channel_limit(context,limit_name: str, uid: str, expected_limit: str):
+    request = context.request
+    expected_limit = float(expected_limit)
+
+    card_id = context.data["users"][uid]["credit_card"]["cardId"]
+
+    response = request.hugosave_get_request(
+        path=ah.card_urls["get_limits"].replace("{card-id}", card_id),
+        headers=ah.get_user_header(context, uid),
+    )
+
+    assert check_status_distribute(response, 200), (
+        f"Failed to fetch limits. Response: {response}"
+    )
+
+    assert "data" in response and "channelDetails" in response["data"], (
+        f"Missing channelDetails in response: {response}"
+    )
+
+    channel_details = response["data"]["channelDetails"]
+
+    expected_channel = "_".join(limit_name.split("_")[:-2])
+
+    matched = False
+
+    for channel in channel_details:
+        if channel["channel"] == expected_channel:
+            limit_details = channel.get("cardLimitDetails", {})
+            user_set_value = limit_details.get("userSetValue")
+
+            assert user_set_value == expected_limit, (
+                f"{expected_channel} limit mismatch. "
+                f"Expected {expected_limit}, got {user_set_value}"
+            )
+            matched = True
+            break
+
+    assert matched, (
+        f"No channel found for {expected_channel}. "
+        f"Available channels: {[c['channel'] for c in channel_details]}"
+    )
+
+
 @Step("I get limit history for card for user ([^']*) and expect status code ([^']*)")
 def get_limit_history(context, uid: str, expected_status_code: str):
     request = context.request
-    card_id = context.data["users"][uid]["card_id"]
+    card_id = context.data["users"][uid]["credit_card"]["cardId"]
 
     row = context.table.rows[0]
     requested_limit_name = row["limit_id"]
 
-    channel_details = context.data["users"][uid]["credit_accounts"]["channelDetails"]
+    channel_details = context.data["users"][uid]["credit_accounts"][0]["channelDetails"]
 
     resolved_limit_id = None
     for channel in channel_details:
@@ -339,20 +437,15 @@ def get_limit_history(context, uid: str, expected_status_code: str):
 
     assert "data" in response, f"Missing data in response: {response}"
 
-    context.data["users"][uid]["credit_accounts"] = (
-        context.data["users"][uid]["credit_accounts"]
-        if isinstance(context.data["users"][uid].get("credit_accounts"), dict)
-        else {}
-    )
-    context.data["users"][uid]["credit_accounts"]["limitHistory"] = response["data"]["limitHistory"]
+    context.data["users"][uid]["credit_accounts"][0]["limitHistory"] = response["data"]["limitHistory"]
+
 
 @Step("I check status of ([^']*) channel ([^']*) for ([^']*) and it should be ([^']*)")
 def check_channel_status(context , card_type:str, channel_type:str, uid : str, status : str) :
     request = context.request
-    user_cards = context.data["users"][uid]["cards"][0]
-    card_id = ""
-    if (user_cards["cardLabel"] == card_type):
-        card_id = user_cards["cardId"]
+
+    card_id = context.data["users"][uid]["credit_card"]["cardId"]
+
 
     if status.strip() == "DISABLED":
         expected_status = False
@@ -390,6 +483,7 @@ def check_channel_status(context , card_type:str, channel_type:str, uid : str, s
             assert saved_status == expected_status, f"Channel Status Not Updated\n, received response: {response}"
 
     retry_check_limit()
+
 
 @Step("I update credit limit for user ([^']*) and expect a status code of ([^']*)")
 def update_credit_limit(context, uid, expected_status_code):
@@ -442,6 +536,7 @@ def update_credit_limit(context, uid, expected_status_code):
     #     "required_lien_amount": required_lien_amount,
     # }
 
+
 @Step("I get cash advance limit for credit account of user ([^']*) and expect a status code of ([^']*)")
 def get_cash_advance_limit(context, uid, expected_status_code):
     request = context.request
@@ -481,8 +576,6 @@ def validate_cash_advance_eligibility(context, uid):
         f"Requested cash advance {requested_amount} exceeds available limit {available_limit}"
     )
 
-    # print("--------context structure-------------", context.data)
-
 
 @Step("I request cash advance for credit account of user ([^']*) and expect a status code of ([^']*)")
 def request_cash_advance(context, uid, expected_status_code):
@@ -495,7 +588,7 @@ def request_cash_advance(context, uid, expected_status_code):
     credit_account = credit_accounts[0]
     account_id = credit_account["creditAccountId"]
 
-    default_cash_wallet_id = context.data["users"][uid]["cashBalances"][0]["cashWalletId"]
+    default_cash_wallet_id = context.data["users"][uid]["user_cash_wallets"]["userCashWallets"][0]["cashWalletId"]
 
     payload = {
         "amount": requested_amount,
@@ -519,6 +612,7 @@ def request_cash_advance(context, uid, expected_status_code):
         f"Expected {expected_status_code}, received: {response}"
     )
 
+
 @Step("I generate credit account bill for user ([^']*) and expect status code ([^']*)")
 def generate_credit_account_bill(context, uid, expected_status_code):
     request = context.request
@@ -539,6 +633,7 @@ def generate_credit_account_bill(context, uid, expected_status_code):
     )
 
     context.data["users"][uid]["generated_credit_bill_response"] = response
+
 
 @Step("I get the credit account bills for user ([^']*) and expect status code ([^']*)")
 def get_credit_account_bills(context, uid, expected_status_code):
@@ -562,6 +657,7 @@ def get_credit_account_bills(context, uid, expected_status_code):
     assert "data" in response, f"Missing data in response: {response}"
 
     context.data["users"][uid]["credit_account_bills"] = response["data"]
+
 
 @Step("I get the latest credit account bill for user ([^']*) and expect status code ([^']*) and bill present as ([^']*)")
 def get_latest_credit_account_bill(context, uid, expected_status_code, expected_bill_present):
@@ -592,6 +688,7 @@ def get_latest_credit_account_bill(context, uid, expected_status_code, expected_
 
     context.data["users"][uid]["latest_credit_account_bill"] = bill_data
 
+
 @Step("I pay credit account bill for user ([^']*) with amount ([^']*) and expect status code ([^']*) and intent status as ([^']*)")
 def pay_credit_account_bill_with_amount(context, uid, amount, expected_status_code, expected_intent_status):
     request = context.request
@@ -601,7 +698,7 @@ def pay_credit_account_bill_with_amount(context, uid, amount, expected_status_co
     credit_account = user_data["credit_accounts"][0]
     credit_account_id = credit_account["creditAccountId"]
 
-    cash_wallet = user_data["cashBalances"][0]
+    cash_wallet = user_data["user_cash_wallets"]["userCashWallets"][0]
     cash_wallet_id = cash_wallet["cashWalletId"]
 
     payload = {
@@ -632,8 +729,6 @@ def pay_credit_account_bill_with_amount(context, uid, amount, expected_status_co
         f"Missing intentId in response: {response_data}"
     )
 
-    # can store response in context for future use
-    # context.data["users"][uid]["pay_credit_account_bill_intent"] = response_data
 
 @Step("I close credit account for user ([^']*) using settlement source ([^']*) and expect status code ([^']*)")
 def close_credit_account(context, uid, settlement_source, expected_status_code):
@@ -644,6 +739,12 @@ def close_credit_account(context, uid, settlement_source, expected_status_code):
     credit_account = user_data["credit_accounts"][0]
     credit_account_id = credit_account["creditAccountId"]
 
+    headers = ah.get_user_header(context, uid)
+    if "user_authorisation_token" in context.data["users"][uid]:
+        headers["x-final-user-authorisation-token"] = context.data["users"][
+            uid
+        ]["user_authorisation_token"]
+
     response = request.hugosave_delete_request(
         path=ah.credit_card_urls["close_credit_account"].replace(
             "{account-id}", credit_account_id
@@ -651,15 +752,92 @@ def close_credit_account(context, uid, settlement_source, expected_status_code):
         params={
             "settlement-source": settlement_source
         },
-        headers=ah.get_user_header(context, uid),
+        headers=headers,
     )
 
     assert check_status_distribute(response, expected_status_code), (
         f"Expected {expected_status_code}, received: {response}"
     )
 
-    # Can store response in context
-    # context.data["users"][uid]["close_credit_account_response"] = response
+
+@Step("I verify credit account is closed for user ([^']*)")
+def verify_credit_account_closed(context, uid: str):
+
+    request = context.request
+
+    previous_accounts = context.data["users"][uid].get("credit_accounts", [])
+    assert previous_accounts, "No previous credit account stored in context"
+
+    credit_account_id = previous_accounts[0]["creditAccountId"]
+
+    @retry(AssertionError, tries=20, delay=20, logger=None)
+    def retry_verify_closure():
+
+        response = request.hugosave_get_request(
+            path=ah.user_profile_urls["credit-account-list"],
+            headers=ah.get_user_header(context, uid),
+        )
+
+        assert check_status_distribute(response, 200), (
+            f"Failed to fetch credit accounts. Response: {response}"
+        )
+
+        accounts = response["data"].get("creditAccounts", [])
+
+        if not accounts:
+            return
+
+        for account in accounts:
+            if account["creditAccountId"] == credit_account_id:
+                status = account.get("accountStatus")
+                assert status in [
+                    "ACCOUNT_CLOSED",
+                    "CREDIT_ACCOUNT_STATUS_CLOSED"
+                ], (
+                    f"Credit account not closed yet. Current status: {status}"
+                )
+                return
+        return
+
+    retry_verify_closure()
+
+
+@Step("I fetch credit account list for user ([^']*)")
+def fetch_credit_account_list(context, uid):
+    request = context.request
+
+    response = request.hugosave_get_request(
+        path=ah.user_profile_urls["credit-account-list"],
+        headers=ah.get_user_header(context, uid),
+    )
+
+    if check_status_distribute(response, 200):
+        context.data["users"][uid]["credit_accounts"] = response["data"]["creditAccounts"]
+
+
+@Step("I wait for credit card status as ([^']*) to activate ([^']*) card for user ([^']*)")
+def get_card_id(context, card_status: str, card_type, uid: str,):
+    request = context.request
+    card_account_id = context.data["users"][uid]["credit_card"]["cardAccountId"]
+
+    @retry(AssertionError, delay=20, tries=20, logger=None)
+    def wait_for_card_status():
+        response = request.hugosave_get_request(
+            path=ah.card_urls["cards"].replace("{card-account-id}", card_account_id),
+            headers=ah.get_user_header(context, uid),
+        )
+        if check_status_distribute(response, 200):
+            if response["data"]["cards"]:
+                for card in response["data"]["cards"]:
+                    if card["cardType"] == card_type:
+                        if card["cardId"] == context.data["users"][uid]["card_id"]:
+                            assert card["cardStatus"] == card_status, f"Expected card status: {card_status}, but received: {card}"
+                            context.data["users"][uid]["cards"] = response["data"][
+                                "cards"
+                            ]
+            else:
+                assert False,f"Expected cards in response but received response: {response}"
+    wait_for_card_status()
 
 
 @Step("I store credit card replacement details for user ([^']*)")
@@ -675,8 +853,8 @@ def store_credit_card_replacement_snapshot(context, uid: str):
     assert balance_data, "Credit account balance not fetched before snapshot"
 
     snapshot = {
-        "old_card_id": user_data["credit_card"]["card_id"],
-        "old_card_account_id": user_data["credit_card"]["card_account_id"],
+        "old_card_id": user_data["credit_card"]["cardId"],
+        "old_card_account_id": user_data["credit_card"]["cardAccountId"],
         "creditAccountId": credit_account_id,
         "approvedLimit": approved_limit,
         "availableCredit": float(balance_data["availableCredit"]),
@@ -686,13 +864,13 @@ def store_credit_card_replacement_snapshot(context, uid: str):
 
     context.data["users"][uid]["replace_snapshot"] = snapshot
 
+
 @Step("I replace ([^']*) credit card for user ([^']*) and expect a card status of ([^']*)")
 def replace_card(context, card_type: str, uid: str, expected_status: str):
 
     request = context.request
 
-    # old_card_id = context.data["users"][uid]["credit_card"]["cardId"]
-    old_card_id = context.data["users"][uid]["credit_card"]["card_id"]
+    old_card_id = context.data["users"][uid]["credit_card"]["cardId"]
 
     context.data["users"][uid]["old_card_id"] = old_card_id
 
@@ -719,6 +897,7 @@ def replace_card(context, card_type: str, uid: str, expected_status: str):
         "category": response["data"]["category"],
         "nameOnCard": response["data"].get("nameOnCard"),
     }
+
 
 @Step("I verify credit account integrity after replacement for user ([^']*)")
 def verify_credit_account_integrity(context, uid: str):
@@ -758,61 +937,33 @@ def check_old_card_status(context, old_card_status, uid):
         path=ah.card_urls["card_details"].replace("{card-id}", card_id),
         headers=ah.get_user_header(context, uid),
     )
-    if check_status_distribute(response, "200"):
+    if check_status_distribute(response, 200):
         assert (
                 response["data"]["cardStatus"] == old_card_status
         ), f"Expected Card status: {old_card_status}\nActual Card status: {response['data']['cardStatus']}"
 
 
-
-
-################################## Temporary files just for testing ################################################
-
-@Step("I print the current test context")
-def print_context(context):
-    import pprint
-
-    print("\n========== CONTEXT DEBUG ==========")
-    pprint.pprint(context.data)
-    print("==================================\n")
-
-
-@step("I load the previous test context")
-def load_context(context):
-    print(context.data)
-
-@Step("I get the user credit accounts for the user ([^']*) and expect the account status of ([^']*)")
-def get_user_credit_accounts(context, uid, expected_status):
+@Step("I fetch credit account balance for user ([^']*)")
+def fetch_credit_account_list(context, uid):
     request = context.request
-
+    credit_account_id = context.data["users"][uid]["credit_accounts"][0]["creditAccountId"]
     response = request.hugosave_get_request(
-        path=ah.user_profile_urls["credit-account-list"],
+        path=ah.cms_urls["balance"].replace("{account-id}", credit_account_id),
         headers=ah.get_user_header(context, uid),
     )
 
     if check_status_distribute(response, 200):
+        context.data["users"][uid]["credit_account_balance"] = response["data"]
 
-        assert "data" in response, f"Expected data in response, got: {response}"
 
-        assert "creditAccounts" in response["data"], (
-            f"Expected creditAccounts in response, got: {response['data']}"
-        )
+################################# Temporary files just for testing ################################################
 
-        credit_accounts = response["data"]["creditAccounts"]
+@Step("I print the current context for ([^']*)")
+def print_context(context,uid):
+    import pprint
 
-        context.data["users"][uid]["credit_accounts"] = credit_accounts
-
-        active_credit_account = None
-
-        for account in credit_accounts:
-            if account.get("accountStatus") == expected_status:
-                active_credit_account = account
-                break
-
-        assert active_credit_account is not None, (
-            f"No credit account found with status {expected_status}"
-        )
-
-        context.data["users"][uid]["credit_account_id"] = active_credit_account["accountId"]
+    print("\n========== CONTEXT DEBUG ==========")
+    pprint.pprint(context.data["users"][uid])
+    print("==================================\n")
 
 ########################################################################################

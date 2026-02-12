@@ -233,5 +233,6 @@ def fetch_credit_account_list(context, uid):
     print("---------context structure-----",context.data["users"])
 
     if check_status_distribute(response, 200):
+        context.data["users"][uid]["credit_account_balance"] = response["data"]
         print("---------------Credit account balance-------------- ",response["data"])
         print("----------------Credit accounts details -----------:", context.data["users"][uid]["credit_accounts"])

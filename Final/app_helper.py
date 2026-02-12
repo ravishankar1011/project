@@ -22,6 +22,7 @@ progress_onboarding_base_url = "/onboard/progress"
 initial_onboarding_base_url = "/onboard/initial"
 reward_base_url = "/reward/v2"
 documents_base_url = "/documents"
+org_base_url = "/org/v1"
 
 auth_user_urls = {
     "root": auth_base_url + "/user",
@@ -48,7 +49,7 @@ dev_urls = {
     "unblock_deposits": app_base_url + "/dev/block/deposits",
     "block_merchant_transactions": app_base_url + "/customer-user/block/debits",
     "unblock_merchant_transactions": app_base_url + "/customer-user/block/debits",
-    "update": app_base_url + "/customer-user/update",
+    "update": auth_base_url + "/customer-user/update",
     "clear_roundup_schedule": app_base_url + "/dev/clear-roundups",
     "settle-all-txn": app_base_url + "/dev/investment/settle-withdraw",
     "questionnaire": app_base_url + "/internal/questionnaire",
@@ -159,6 +160,7 @@ card_urls = {
     "get_limits": app_base_url + "/card/{card-id}/txn-channel",
     "get_limit_history": app_base_url + "/card/{card-id}/limits/history",
 }
+
 # Credit Card related URLs
 credit_card_urls = {
     "get_product_config": app_base_url + "/credit-account/product-config/CREDIT_ACCOUNT_SECURED_CREDIT_CARD_PRODUCT",
@@ -169,7 +171,7 @@ credit_card_urls = {
     "get_credit_account_bills": app_base_url + "/credit-account/{account-id}/bills",
     "get_credit_account_latest_bill": app_base_url + "/credit-account/{account-id}/latest-bill",
     "pay_credit_account_bill": app_base_url + "/credit-account/{account-id}/pay-bill",
-    "close_credit_account" : app_base_url + "credit-account/{account-id}/close",
+    "close_credit_account" : app_base_url + "/credit-account/{account-id}/close",
 }
 
 progress_onboarding_urls = {
@@ -233,7 +235,7 @@ reward_urls = {
 
 questionnaire_urls = {
     "root": auth_base_url + "/questionnaire",
-    "list": auth_base_url + "/questionnaire/list",
+    "list": org_base_url + "/questionnaire/list",
     "details": auth_base_url + "/questionnaire/questionnaire-name",
     "user-questionnaire": auth_base_url + "/questionnaire/user-questionnaire",
     "update": auth_base_url + "/questionnaire/user-questionnaire/{user-questionnaire-id}",
@@ -330,10 +332,10 @@ user_urls = {
 }
 
 product_urls = {
-    "root": app_base_url + "/customer",
-    "create": app_base_url + "/customer/product",
-    "approve": app_base_url + "/customer/product/{product-id}/approve",
-    "transaction_code": app_base_url + "/customer/product/{product-id}/transaction-code"
+    "root": org_base_url + "/product",
+    "create": org_base_url + "/product",
+    "approve": org_base_url + "/product/{product-id}/approve",
+    "transaction_code": org_base_url + "/product/{product-id}/transaction-code"
 }
 
 
@@ -457,9 +459,9 @@ def get_device_authorisation_header(context, uid):
 def get_questionnarie_authorisation_header(uid, context):
     device_info = get_device_info(context, "UID1")
     return {
-        "x-user-profile-id": uid,
         "app-build-version": context.data["config_data"]["app-build-version"],
         "x-device-id": device_info["x-device-id"],
+        "x-org-id": uid
     }
 
 
@@ -485,27 +487,13 @@ def get_auth_header(uid, context):
         "app-build-version": context.data["config_data"]["app-build-version"],
     }
 
-#
-# def get_user_profile_id(uid, context):
-#     try:
-#         return context.data["users"][uid]["create_new_user_response"]["userProfileId"]
-#     except Exception:
-#         return ""
-# --------------------------Just for testing purpose----------------------------------------------
+
 def get_user_profile_id(uid, context):
-    user = context.data["users"][uid]
+    try:
+        return context.data["users"][uid]["create_new_user_response"]["userProfileId"]
+    except Exception:
+        return ""
 
-    # Existing user (loaded from JSON)
-    if "userProfileId" in user:
-        return user["userProfileId"]
-
-    # Newly created user
-    if "create_new_user_response" in user:
-        return user["create_new_user_response"]["userProfileId"]
-
-    raise Exception(f"userProfileId not found for user {uid}")
-
-# ------------------------------------------------------------------------
 
 def get_uuid():
     return str(uuid.uuid1())
@@ -562,7 +550,7 @@ def get_dummy_user_data(req):
             if "address" in req
             else None
         ),
-        "dob": "01-02-19" + get_rand_number(2) if "dob" in req else None,
+        "dob": "19" + get_rand_number(2) + "-02-01" if "dob" in req else None,
         "name": "First" + random_number if "name" in req else None,
         "last_name": "Last" + random_number if "last_name" in req else None,
         "nationality": "SGP" if "nationality" in req else None,
@@ -719,7 +707,7 @@ def get_balance(response, product_code):
 
 
 def get_balance_by_product(response, product_code):
-    for account_balance in response["data"]["bankBalances"]:
+    for account_balance in response["data"]["cashBalances"]:
         if account_balance["productCode"] == product_code:
             return account_balance["balance"]
 
@@ -914,29 +902,6 @@ def serialize_public_key(public_key: rsa.RSAPublicKey) -> str:
     ).decode('utf-8')
     return pem_public_key
 
-# ----------------------Just for testing purpose------------------------------------
-
-def serialize_private_key(private_key):
-    return private_key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.PKCS8,
-        encryption_algorithm=serialization.NoEncryption()
-    ).decode("utf-8")
-
-def deserialize_private_key(private_key_pem: str):
-    return serialization.load_pem_private_key(
-        private_key_pem.encode("utf-8"),
-        password=None
-    )
-def get_binded_signature(private_key, device_info: dict) -> str:
-
-    device_id = device_info["x-device-id"]
-    epoch = device_info["x-epoch"]
-
-    message = f"{device_id}:{epoch}"
-    return create_signature(private_key, message)
-
-# ----------------------------------------------------------------------------------
 
 def create_signature(private_key: rsa.RSAPrivateKey, message: str) -> str:
     message_bytes = message.encode("utf-8")
@@ -1081,6 +1046,16 @@ def get_cdv_additional_details_data(context, uid):
     }
 
 
+def get_verify_income_details(context, uid):
+    return {
+        "data": json.dumps(
+            {
+                "source_category": "SPONSOR_STUDENT"
+            }
+        )
+    }
+
+
 def get_passcode_body(context, user_profile_identifier):
     verification_token = context.data["users"][user_profile_identifier][
         "journey_initiate_response"
@@ -1091,16 +1066,6 @@ def get_passcode_body(context, user_profile_identifier):
             {"verification_token": verification_token, "passcode": passcode}
         )
     }
-
-def get_verify_income_details(context, uid):
-    return {
-        "data": json.dumps(
-            {
-                "source_category": "SPONSOR_STUDENT"
-            }
-        )
-    }
-
 
 
 def get_other_journey_body(context, user_profile_identifier):
@@ -1279,7 +1244,8 @@ JOURNEY_DATA_BUILDERS = {
     "HUGOSAVE_ADDITIONAL_DETAILS": get_hugosave_additional_details_data,
     "HUGOSAVE_TRUST": get_trust_data,
     "PASSCODE": get_passcode,
-    "CDV_ADDITIONAL_DETAILS": get_cdv_additional_details_data
+    "CDV_ADDITIONAL_DETAILS": get_cdv_additional_details_data,
+    "HUGOBANK_VERIFY_INCOME": get_verify_income_details
 }
 
 
@@ -1331,7 +1297,7 @@ def get_rand_email():
 
 def get_portal_principle_id(context):
 
-    if context.data["customer"] == "HUGOSAVE":
+    if context.data["org_id"] == "HUGOSAVE_SG":
         return "7212248a-0b7f-4ac9-a0c2-52826d65b43c"
     elif context.data["customer"] == "CDV":
         return "3b4e6c8a-0d2f-421e-b9a7-5c8e2d3f1b09"

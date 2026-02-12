@@ -356,3 +356,129 @@ Card Ordering Imp Notes:-
     ]
   }
 }
+
+--------------------------Context after ordering and activation-----------------------------------------------------------
+context.data
+├── config_data
+│   ├── DISTRIBUTE_ENDPOINT
+│   ├── app-build-version
+│   └── customer_profile_id
+│
+├── customer
+├── org_id
+│
+├── journey_details
+│   └── INCOME_VERIFICATION_STEP
+│       └── HUGOBANK_VERIFY_INCOME
+│
+└── users
+    └── UID1
+        ├── user_name
+        ├── current_device
+        │
+        ├── create_new_user_response
+        │   ├── authenticationToken
+        │   ├── userProfileId
+        │   ├── email
+        │   ├── phoneNumber
+        │   └── userStatus
+        │
+        ├── user_devices
+        │   └── device_1
+        │       ├── x-device-id
+        │       ├── os / os-version
+        │       ├── app-version
+        │       └── device metadata
+        │
+        ├── initiate_mobile_verification_response
+        ├── submit_mobile_verification_response
+        │
+        ├── initiate_device_authorisation_response
+        │   ├── deviceAuthorisationStatus
+        │   ├── deviceAuthorisationToken
+        │   └── deviceId
+        │
+        ├── initiation_signature
+        ├── private_key
+        ├── public_key
+        │
+        ├── initiate_initial_onboarding_response
+        ├── submit_initial_onboarding_response
+        │
+        ├── initiate_onboarding_response
+        │   └── journeySteps
+        │       └── INCOME_VERIFICATION_STEP
+        │
+        ├── initiate_journey_response
+        │   ├── journey
+        │   ├── journeyId
+        │   ├── journeyStatus
+        │   └── data
+        │       ├── salaryDetails
+        │       ├── rentalDetails
+        │       ├── freelanceDetails
+        │       ├── pensionDetails
+        │       └── other income sources
+        │
+        ├── journey_initiate_response        # PASSCODE
+        ├── journey_submit_response           # PASSCODE
+        │
+        ├── user_authorisation_initial_initiate_response
+        ├── user_initial_authorisation_token
+        ├── user_authorisation_token
+        ├── user_final_authorisation_token_response
+        │
+        ├── user_cash_wallets
+        │   ├── userAccounts
+        │   │   └── account
+        │   │       └── userCardAccounts
+        │   │           └── cardAccountId          # DEBIT ONLY
+        │   └── userCashWallets
+        │       └── CASH_WALLET_CURRENT
+        │           ├── cashWalletId
+        │           ├── iban
+        │           ├── balance
+        │           └── userCardAccounts
+        │               └── cardAccountId          # DEBIT ONLY
+        │
+        ├── credit_accounts
+        │   └── [0]
+        │       ├── creditAccountId
+        │       ├── accountNumber
+        │       ├── accountStatus
+        │       ├── approvedLimit
+        │       └── productCode
+        │
+        ├── credit_card
+        │   ├── cardId
+        │   ├── cardAccountId
+        │   ├── cardStatus            # CARD_STATUS_ACTIVE (post activation)
+        │   ├── cardType              # PHYSICAL
+        │   ├── category              # CREDIT_CARD
+        │   ├── nameOnCard
+        │   └── raw (optional, full UserCardDTO if stored)
+        │
+        ├── cards                     # fetched via card-details / cards API
+        │   └── UserCardDTO
+        │       ├── cardId
+        │       ├── cardAccountId
+        │       ├── cardStatus
+        │       ├── cardTxnChannelDetails
+        │       ├── scheme
+        │       ├── designConfigCode
+        │       └── userActionDetails
+        │
+        ├── user_details
+        │   ├── password
+        │   ├── security_answers
+        │   └── non_security_answers
+        │
+        └── user_details_response
+            ├── userProfileId
+            ├── addresses
+            ├── riskScore
+            ├── userState
+            │   ├── accountLevel (L2)
+            │   ├── cardAccountActive
+            │   └── cardRequested
+            └── userStatus (PROFILE_ACTIVE)
