@@ -387,8 +387,8 @@ Feature: Credit_card feature
     Then I fetch credit card constants for HUGOBANK
 
     And I validate credit card eligibility using balance of the wallet with product code CASH_WALLET_CURRENT for user UID1
-      | credit_limit |
-      | 6000         |
+      | credit_limit  |
+      | 20000         |
 
     Then I initiate the initial user authorisation to ORDER_CARD for user UID1 and expect a status of USER_AUTHORISATION_SUCCESS
 
@@ -405,8 +405,8 @@ Feature: Credit_card feature
     And I get the final user authorisation token for ORDER_CARD of user UID1 and expect a status USER_AUTHORISATION_SUCCESS
 
     Then I order a Physical Visa Credit Card for UID1 with card name as random_valid_choice and expect a status code of 200 and expect a card status of CARD_STATUS_PENDING
-      | credit_limit |
-      | 6000         |
+      | credit_limit  |
+      | 20000         |
 
     Then I initiate the initial user authorisation to ACTIVATE_CARD for user UID1 and expect a status of USER_AUTHORISATION_SUCCESS
 
@@ -460,6 +460,24 @@ Feature: Credit_card feature
 
     And I verified the updated POS_DAILY_LIMIT limit for user UID1 and limit should be 5000
 
+    # Transaction above limit value
+    Given I create below transaction for PHYSICAL card for user profile id and expect a status code of 200
+      | user_profile_identifier | transaction_permutation_name | billing_amount  | is_foreign_txn | channel        |
+      | UID1                    | AUTH_CLEAR                   | 6000            | false          | POS            |
+
+    Then I wait for 10 seconds
+
+    And I check the available credits for user UID1 and available credit should be 20000 exact
+
+    # Transaction below limit value
+    Given I create below transaction for PHYSICAL card for user profile id and expect a status code of 200
+      | user_profile_identifier | transaction_permutation_name | billing_amount  | is_foreign_txn | channel        |
+      | UID1                    | AUTH_CLEAR                   | 3000            | false          | POS            |
+
+    Then I wait for 10 seconds
+
+    And I check the available credits for user UID1 and available credit should be 17000 exact
+
     Then I update card limit for user UID1 and expect status code 200
       | limit_id               | value |
       | E_COMMERCE_DAILY_LIMIT | 5000  |
@@ -468,13 +486,49 @@ Feature: Credit_card feature
 
     And I verified the updated E_COMMERCE_DAILY_LIMIT limit for user UID1 and limit should be 5000
 
+    # Transaction above limit value
+    Given I create below transaction for PHYSICAL card for user profile id and expect a status code of 200
+      | user_profile_identifier | transaction_permutation_name | billing_amount  | is_foreign_txn | channel               |
+      | UID1                    | AUTH_CLEAR                   | 6000            | false          | E_COMMERCE            |
+
+    Then I wait for 10 seconds
+
+    And I check the available credits for user UID1 and available credit should be 17000 exact
+
+    # Transaction below limit value
+    Given I create below transaction for PHYSICAL card for user profile id and expect a status code of 200
+      | user_profile_identifier | transaction_permutation_name | billing_amount  | is_foreign_txn | channel               |
+      | UID1                    | AUTH_CLEAR                   | 3000            | false          | E_COMMERCE            |
+
+    Then I wait for 10 seconds
+
+    And I check the available credits for user UID1 and available credit should be 14000 exact
+
     Then I update card limit for user UID1 and expect status code 200
       | limit_id               | value |
-      | ATM_DAILY_LIMIT | 5000  |
+      | ATM_DAILY_LIMIT        | 5000  |
 
     Then I wait for 10 seconds
 
     And I verified the updated ATM_DAILY_LIMIT limit for user UID1 and limit should be 5000
+
+    # Transaction above limit value
+    Given I create below transaction for PHYSICAL card for user profile id and expect a status code of 200
+      | user_profile_identifier | transaction_permutation_name | billing_amount  | is_foreign_txn | channel        |
+      | UID1                    | AUTH_CLEAR                   | 6000            | false          | ATM            |
+
+    Then I wait for 10 seconds
+
+    And I check the available credits for user UID1 and available credit should be 14000 exact
+
+    # Transaction below limit value
+    Given I create below transaction for PHYSICAL card for user profile id and expect a status code of 200
+      | user_profile_identifier | transaction_permutation_name | billing_amount  | is_foreign_txn | channel        |
+      | UID1                    | AUTH_CLEAR                   | 3000            | false          | ATM            |
+
+    Then I wait for 10 seconds
+
+    And I check the available credits for user UID1 and available credit should be 9850 approx
 
     # GET limit history
     Then I get limit history for card for user UID1 and expect status code 200
@@ -673,6 +727,14 @@ Feature: Credit_card feature
     Then I verified approved_limit for user UID1 and approved_limit should be 30000 PKR exact
 
     And I check the balance of the wallet with product code CASH_WALLET_CURRENT for user UID1 and the balance should be 26500 PKR exact
+
+    Given I create below transaction for PHYSICAL card for user profile id and expect a status code of 200
+      | user_profile_identifier | transaction_permutation_name | billing_amount  | is_foreign_txn | channel        |
+      | UID1                    | AUTH_CLEAR                   | 25000           | false          | E_COMMERCE     |
+
+    Then I wait for 10 seconds
+
+    And I check the available credits for user UID1 and available credit should be 5000 approx
 
     Then I fetch credit account list for user UID1
 
@@ -1082,3 +1144,4 @@ Feature: Credit_card feature
     And I fetch credit account balance for user UID1
 
     And I verify credit account integrity after replacement for user UID1
+
