@@ -1279,7 +1279,8 @@ JOURNEY_DATA_BUILDERS = {
     "HUGOSAVE_ADDITIONAL_DETAILS": get_hugosave_additional_details_data,
     "HUGOSAVE_TRUST": get_trust_data,
     "PASSCODE": get_passcode,
-    "CDV_ADDITIONAL_DETAILS": get_cdv_additional_details_data
+    "CDV_ADDITIONAL_DETAILS": get_cdv_additional_details_data,
+    "HUGOBANK_VERIFY_INCOME": get_verify_income_details
 }
 
 
@@ -1337,3 +1338,13 @@ def get_portal_principle_id(context):
         return "3b4e6c8a-0d2f-421e-b9a7-5c8e2d3f1b09"
     else:
         return "7212248a-0b7f-4ac9-a0c2-52826d65b43c"
+
+
+def get_verify_income_details(context, uid):
+    return {
+        "data": json.dumps(
+            {
+                "source_category": "SPONSOR_STUDENT"
+            }
+        )
+    }

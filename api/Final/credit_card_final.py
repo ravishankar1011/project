@@ -58,10 +58,12 @@ def fetch_credit_card_constants(context, customer):
 @step("I validate credit card eligibility using balance of the wallet with product code ([^']*) for user ([^']*)")
 def validate_eligibility(context,product_code, uid):
 
-    requested_credit_limit = float(context.table[0]["credit_limit"])
+    # requested_credit_limit = float(context.table[0]["credit_limit"])
+    for row in context.table:
+        requested_credit_limit = float(row["credit_limit"])
 
-    if "credit_card_constants" not in context.data:
-        raise Exception("Error: Credit Card constants missing. Check if you run the 'fetch constants' step")
+    # if "credit_card_constants" not in context.data:
+    #     raise Exception("Error: Credit Card constants missing. Check if you run the 'fetch constants' step")
 
     cc_constants = context.data["credit_card_constants"]
     min_limit = float(cc_constants["min_credit_limit"])
@@ -107,66 +109,60 @@ def validate_eligibility(context,product_code, uid):
     print("SUCCESS: User is eligible for this credit limit.")
 
 
-@Step("I order a credit card for user ([^']*)")
-def order_credit_card(context, uid):
-
+@Step("I order a ([^']*) as ([^']*) for ([^']*) with card name as ([^']*) and expect a status code of ([^']*) and expect a card status of ([^']*)")
+def order_credit_card(context,card_type: str,card_tag: str,uid: str,card_name: str,expected_status_code: str,expected_status):
     request = context.request
+    order_card_req = {}
+    if context.table:
+        if "credit_limit" in context.table.headings:
+            credit_limit = int(context.table.rows[0]["credit_limit"])
 
-    credit_limit = int(context.table.rows[0]["credit_limit"])
-    expected_card_status = context.table.rows[0]["expected_card_status"]
+    product_code = "CARD_PRODUCT_PHYSICAL_SECURED_CREDIT_CARD_VISA"
 
-    order_card_req = {
-        "product_code": "CARD_PRODUCT_PHYSICAL_SECURED_CREDIT_CARD_VISA",
-        "funding_details": {
-            "approved_limit": credit_limit,
-            "earn_interest_on_lien": True,
-        }
-    }
+    order_card_req.update({
+        "product_code": product_code,
+        "funding_details":
+            {
+                "approved_limit": credit_limit,
+                "earn_interest_on_lien": True
+            }
+    })
 
-    # Fetch card name
+    path = ah.card_urls["order_card"]
 
-    response = request.hugosave_get_request(
-        path=ah.user_profile_urls["card_name"],
-        headers=ah.get_user_header(context, uid),
-    )
-    if check_status_distribute(response, 200):
-        assert "names" in response["data"], (
-            f"Expected names in response, but received: {response}"
+    if card_name == "random_valid_choice":
+        response = request.hugosave_get_request(
+            path=ah.user_profile_urls["card_name"],
+            headers=ah.get_user_header(context, uid),
         )
-        order_card_req["name_on_card"] = response["data"]["names"][0]
-
-
-    #Prepare headers
+        if check_status_distribute(response, "200"):
+            assert "names" in response["data"], f"Expected names in response, but received response: {response}"
+            order_card_req["name_on_card"] = response["data"]["names"][0]
+    elif card_name != "empty":
+        order_card_req["name_on_card"] = card_name
 
     headers = ah.get_user_header(context, uid)
-
-    assert "user_authorisation_token" in context.data["users"][uid], (
-        "Final user authorisation token missing for credit card order"
-    )
-
-    headers["x-final-user-authorisation-token"] = (
-        context.data["users"][uid]["user_authorisation_token"]
-    )
-
+    if "user_authorisation_token" in context.data["users"][uid]:
+        headers["x-final-user-authorisation-token"] = context.data["users"][
+            uid
+        ]["user_authorisation_token"]
     response = request.hugosave_post_request(
-        path=ah.card_urls["issue_card"],
+        path=path,
         headers=headers,
         data=order_card_req,
     )
 
-    if check_status_distribute(response, 200):
+    if check_status_distribute(response, expected_status_code):
+        if "data" in response:
+            assert expected_status == response["data"]["cardStatus"], f"Expected status: {expected_status}, but received response: {response}"
+            context.data["cardOrderStatus"] = response["data"]
+            context.data["users"][uid]["credit_card"]=response["data"]
+            context.data["users"][uid][card_tag] = {}
+            context.data["users"][uid][card_tag]["card_id"] = response["data"]["cardId"]
+            context.data["users"][uid][card_tag]["cardAccountId"] = response["data"]["cardAccountId"]
 
-        assert "data" in response, (
-            f"Expected data in response, but received: {response}"
-        )
-
-        assert response["data"]["cardStatus"] == expected_card_status, (
-            f"Expected card status {expected_card_status}, "
-            f"but received {response['data']['cardStatus']}"
-        )
-
-        context.data["cardOrderStatus"] = response["data"]
-        context.data["users"][uid]["card_id"] = response["data"]["cardId"]
+        else:
+            assert expected_status == response["headers"]["message"], f"Expected status: {expected_status}, but received response: {response}"
 
 
 @Step("I view the credit card PIN for user ([^']*) and expect the PIN to be returned successfully")
@@ -496,16 +492,6 @@ def update_credit_limit(context, uid, expected_status_code):
     credit_account = credit_accounts[0]
 
     account_id = credit_account["creditAccountId"]
-    # current_limit = float(credit_account["approvedLimit"])
-
-    # limit_to_increase = final_requested_limit - current_limit
-    # assert limit_to_increase > 0, "Final credit limit must be greater than current limit"
-
-    # # fetch lien factor from constants
-    # lien_factor = context.data["credit_card_constants"]["lien_factor"]
-    #
-    # # calculate required lien amount
-    # required_lien_amount = limit_to_increase * lien_factor
 
     payload = {
         "approvedLimit": final_requested_limit
@@ -816,11 +802,11 @@ def fetch_credit_account_list(context, uid):
 
 
 @Step("I wait for credit card status as ([^']*) to activate ([^']*) card for user ([^']*)")
-def get_card_id(context, card_status: str, card_type, uid: str,):
+def get_card_status(context, card_status: str, card_type, uid: str,):
     request = context.request
     card_account_id = context.data["users"][uid]["credit_card"]["cardAccountId"]
 
-    @retry(AssertionError, delay=20, tries=20, logger=None)
+    @retry(AssertionError, delay=30, tries=40, logger=None)
     def wait_for_card_status():
         response = request.hugosave_get_request(
             path=ah.card_urls["cards"].replace("{card-account-id}", card_account_id),
@@ -830,7 +816,7 @@ def get_card_id(context, card_status: str, card_type, uid: str,):
             if response["data"]["cards"]:
                 for card in response["data"]["cards"]:
                     if card["cardType"] == card_type:
-                        if card["cardId"] == context.data["users"][uid]["card_id"]:
+                        if card["cardId"] == context.data["users"][uid]["credit_card"]["cardId"]:
                             assert card["cardStatus"] == card_status, f"Expected card status: {card_status}, but received: {card}"
                             context.data["users"][uid]["cards"] = response["data"][
                                 "cards"
@@ -956,14 +942,119 @@ def fetch_credit_account_list(context, uid):
         context.data["users"][uid]["credit_account_balance"] = response["data"]
 
 
-################################# Temporary files just for testing ################################################
 
-@Step("I print the current context for ([^']*)")
-def print_context(context,uid):
-    import pprint
+#######################Scenario outline#################################################################
 
-    print("\n========== CONTEXT DEBUG ==========")
-    pprint.pprint(context.data["users"][uid])
-    print("==================================\n")
 
-########################################################################################
+@Step("I update ([^']*) to ([^']*) for user ([^']*) and expect status code ([^']*)")
+def update_card_limit(context, limit_id: str, limit_value: str, uid: str, expected_status_code: str):
+    request = context.request
+    card_id = context.data["users"][uid]["card_id"]
+    # card_id = context.data["users"][uid]["credit_card"]["cardId"]
+    requested_limit_name = limit_id
+    new_value = int(limit_value)
+
+    # channel_details = context.data["users"][uid]["credit_accounts"]["channelDetails"]
+    channel_details = context.data["users"][uid]["credit_accounts"][0]["channelDetails"]
+
+    resolved_limit_id = None
+    for channel in channel_details:
+        if requested_limit_name.startswith(channel["channel"]):
+            resolved_limit_id = channel["cardLimitDetails"]["limitId"]
+            break
+
+    assert resolved_limit_id, f"Unable to resolve limitId for {requested_limit_name}"
+
+
+    payload = {
+        "limitId": resolved_limit_id,
+        "value": new_value,
+    }
+
+    headers = ah.get_user_header(context, uid)
+    headers["x-final-user-authorisation-token"] = context.data["users"][uid][
+        "user_authorisation_token"
+    ]
+
+    response = request.hugosave_put_request(
+        path=ah.card_urls["update_limits"].replace("{card-id}", card_id),
+        data=payload,
+        headers=headers,
+    )
+
+    assert check_status_distribute(response, expected_status_code), (
+        f"Expected {expected_status_code}, received: {response}"
+    )
+
+
+@Step("I verify ([^']*) limit for user ([^']*) should be ([^']*)")
+def verify_updated_channel_limit(context, limit_name: str, uid: str, expected_limit: str):
+    request = context.request
+    expected_limit = float(expected_limit)
+
+    # card_id = context.data["users"][uid]["credit_card"]["cardId"]
+    card_id = context.data["users"][uid]["card_id"]
+    response = request.hugosave_get_request(
+        path=ah.card_urls["get_limits"].replace("{card-id}", card_id),
+        headers=ah.get_user_header(context, uid),
+    )
+
+    assert check_status_distribute(response, 200), (
+        f"Failed to fetch limits. Response: {response}"
+    )
+
+    assert "data" in response and "channelDetails" in response["data"], (
+        f"Missing channelDetails in response: {response}"
+    )
+
+    channel_details = response["data"]["channelDetails"]
+
+    expected_channel = "_".join(limit_name.split("_")[:-2])
+
+    matched = False
+
+    for channel in channel_details:
+        if channel["channel"] == expected_channel:
+            limit_details = channel.get("cardLimitDetails", {})
+            user_set_value = limit_details.get("userSetValue")
+
+            assert user_set_value == expected_limit, (
+                f"{expected_channel} limit mismatch. "
+                f"Expected {expected_limit}, got {user_set_value}"
+            )
+            matched = True
+            break
+
+    assert matched, (
+        f"No channel found for {expected_channel}. "
+        f"Available channels: {[c['channel'] for c in channel_details]}"
+    )
+
+
+@Step("I check available credit for user ([^']*) should be ([^']*)")
+def check_available_credit(context, uid, expected_amount):
+    request = context.request
+
+    credit_account_id = context.data["users"][uid]["credit_accounts"][0]["creditAccountId"]
+
+    expected_amount = float(expected_amount)
+
+    @retry(AssertionError, tries=40, delay=20, logger=None)
+    def retry_for_available_credit():
+
+        response = request.hugosave_get_request(
+            path=ah.cms_urls["balance"].replace("{account-id}", credit_account_id),
+            headers=ah.get_user_header(context, uid),
+        )
+
+        assert check_status_distribute(response, 200)
+
+        available_credit_balance = float(response["data"]["availableCredit"])
+
+        assert available_credit_balance == expected_amount, \
+            f"Expected {expected_amount}, got {available_credit_balance}"
+
+    retry_for_available_credit()
+
+
+##################################################################################################

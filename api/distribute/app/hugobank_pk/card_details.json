@@ -1,7 +1,7 @@
 {
   "UID1": {
-    "cardId": "653e080f-deec-4315-ad07-ba36b6459ae8",
-    "cardAccountId": "b7bdd440-3aa3-4697-bd6c-96df6f29f752",
+    "cardId": "fe79abf1-0f16-48dd-97d9-456cc8163a3b",
+    "cardAccountId": "bbde90a1-545b-4f3c-9a52-4f67cfc848e0",
     "cardType": "PHYSICAL",
     "category": "CREDIT_CARD",
     "scheme": "VISA",
@@ -20,7 +20,7 @@
         },
         "cardLimitDetails": {
           "limitId": "33a419ef-e840-4f42-b988-d6dcfed37b1e",
-          "accountId": "653e080f-deec-4315-ad07-ba36b6459ae8",
+          "accountId": "fe79abf1-0f16-48dd-97d9-456cc8163a3b",
           "limitWindow": {
             "type": "CALENDER_DAY",
             "value": 1
@@ -28,13 +28,14 @@
           "minValue": 0.0,
           "maxValue": 200000.0,
           "userSetValue": 5000.0,
-          "currentSpentValue": 0.0,
+          "currentSpentValue": 1000.0,
           "isEditable": true,
           "isCumulativeLimit": true,
           "isHardLimit": true,
           "displayTitle": "",
           "displayText": "",
-          "limitUsageStatus": "LIMIT_USAGE_WITHIN_SAFE"
+          "limitUsageStatus": "LIMIT_USAGE_WITHIN_SAFE",
+          "limitType": "FLOW"
         }
       },
       {
@@ -48,21 +49,22 @@
         },
         "cardLimitDetails": {
           "limitId": "0566baad-6059-4ca1-a9db-30bd2f40ae5e",
-          "accountId": "653e080f-deec-4315-ad07-ba36b6459ae8",
+          "accountId": "fe79abf1-0f16-48dd-97d9-456cc8163a3b",
           "limitWindow": {
             "type": "CALENDER_DAY",
             "value": 1
           },
           "minValue": 0.0,
           "maxValue": 200000.0,
-          "userSetValue": 200000.0,
-          "currentSpentValue": 0.0,
+          "userSetValue": 5000.0,
+          "currentSpentValue": 500.0,
           "isEditable": true,
           "isCumulativeLimit": true,
           "isHardLimit": true,
           "displayTitle": "",
           "displayText": "",
-          "limitUsageStatus": "LIMIT_USAGE_WITHIN_SAFE"
+          "limitUsageStatus": "LIMIT_USAGE_WITHIN_SAFE",
+          "limitType": "FLOW"
         }
       },
       {
@@ -76,21 +78,22 @@
         },
         "cardLimitDetails": {
           "limitId": "b91b958c-5233-47d8-a664-758d0bcddfbe",
-          "accountId": "653e080f-deec-4315-ad07-ba36b6459ae8",
+          "accountId": "fe79abf1-0f16-48dd-97d9-456cc8163a3b",
           "limitWindow": {
             "type": "CALENDER_DAY",
             "value": 1
           },
           "minValue": 0.0,
           "maxValue": 100000.0,
-          "userSetValue": 100000.0,
-          "currentSpentValue": 0.0,
+          "userSetValue": 5000.0,
+          "currentSpentValue": 500.0,
           "isEditable": true,
           "isCumulativeLimit": true,
           "isHardLimit": true,
           "displayTitle": "",
           "displayText": "",
-          "limitUsageStatus": "LIMIT_USAGE_WITHIN_SAFE"
+          "limitUsageStatus": "LIMIT_USAGE_WITHIN_SAFE",
+          "limitType": "FLOW"
         }
       }
     ],

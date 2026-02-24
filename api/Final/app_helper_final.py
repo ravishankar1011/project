@@ -22,6 +22,7 @@ progress_onboarding_base_url = "/onboard/progress"
 initial_onboarding_base_url = "/onboard/initial"
 reward_base_url = "/reward/v2"
 documents_base_url = "/documents"
+behavioural_base_url = "/behavioural/v2"
 org_base_url = "/org/v1"
 
 auth_user_urls = {
@@ -359,7 +360,6 @@ document_urls = {
     "update_document_frequency": app_base_url + documents_base_url + "/frequency",
 }
 
-
 virtual_id_urls = {
     "link": app_base_url + "/virtual-id/link",
     "create": app_base_url + "/virtual-id/"
@@ -369,6 +369,49 @@ mandate_urls = {
     "create-mandate": app_base_url + "/direct-debit",
     "get-mandate": app_base_url + "/direct-debit/mandate-id",
 }
+
+behavioural_urls = {
+    "onboarding": behavioural_base_url + "/internal/onboarding",
+    "push_event": behavioural_base_url + "/event/server",
+    "user_quests_dto": behavioural_base_url + "/quests/user-quests",
+    "user_state": behavioural_base_url + "/quests/user-state-changed",
+    "claim_reward": reward_base_url + "/user-reward/user-reward-id/claim",
+    "fetch_claimed_reward": reward_base_url + "/user-reward/claimed",
+    "fetch_onboard_dto": behavioural_base_url + "/dev/user",
+    "user_quest_profile": behavioural_base_url + "/dev/user-quest-profile",
+    "user_referrals": behavioural_base_url + "/quests/user-referrals/unlocked",
+    "user_quests": behavioural_base_url + "/dev/user-quests",
+    "quests": behavioural_base_url + "/quests",
+    "migrate": behavioural_base_url + "/internal/migrate",
+    "create_quest": behavioural_base_url + "/internal/create/quest",
+    "add_cohort": behavioural_base_url + "/internal/cohort",
+    "reset_quest_stats": behavioural_base_url + "/dev/reset-quest-stats/quest-id",
+}
+
+
+onboarding_fields = [
+    "email",
+    "first_name",
+    "account_type",
+    "time_zone",
+    "roundups_enabled",
+    "profile_status",
+]
+
+quest_user_profile_entity_fields = [
+    "account_type",
+    "time_zone",
+    "roundups_enabled",
+    "profile_status",
+]
+
+
+def get_user_header(uid, context):
+    return {
+        "x-user-profile-id": uid,
+        "app-build-version": context.data["config_data"]["app-build-version"],
+    }
+
 
 def determine_org_id(distribute_endpoint):
     if "hugobank" in distribute_endpoint:
@@ -702,8 +745,8 @@ def get_balance(response, product_code):
             if account_balance["productCode"] == product_code:
                 return account_balance["balance"]
     elif product_code == "CASH_WALLET_ROUNDUP":
-        balance = response["data"]["roundUpBalance"]["balance"]
-    return balance
+        return response["data"]["roundUpBalance"]["balance"]
+
 
 
 def get_balance_by_product(response, product_code):
@@ -714,9 +757,9 @@ def get_balance_by_product(response, product_code):
     return None
 
 
-def get_card_id(context, user_profile_identifier, card_type):
+def get_card_id(context, uid, card_tag):
     # TODO updated this to return cardId by productCode
-    return context.data["users"][user_profile_identifier]["card_id"]
+    return context.data["users"][uid][card_tag]["card_id"]
 
 
 def get_card_account_id(context, user_identifier):
@@ -825,7 +868,7 @@ def get_passcode(context, user_profile_identifier):
     return context.data["users"][user_profile_identifier]["user_details"]["password"]
 
 
-def get_mobile_verification_header(context, device_info):
+def get_user_name_verification_header(context, device_info):
         return {
             "os": device_info["os"],
             "os-build-number": device_info["os-build-number"],
@@ -1013,10 +1056,10 @@ def get_presigned_url(context, uid, document_type, detail_type, proof_type, cust
         else:
             document_list = context.data["users"][uid]["initiate_journey_response"]["data"][detail_type][proof_type]
         if document_type in document_list:
-            return{"file_path": "tests/api/distribute/app/hugosave_sg/test-docs/Front.png", "upload_url": document_list[document_type]["uploadUrl"]}
+            return{"file_path": "tests/api/distribute/steps/test-docs/Front.png", "upload_url": document_list[document_type]["uploadUrl"]}
 
     else:
-        return{"file_path": "tests/api/distribute/app/hugosave_sg/test-docs/Front.png", "upload_url": context.data["users"][uid]["initiate_journey_response"]["data"][detail_type]["uploadUrl"]}
+        return{"file_path": "tests/api/distribute/steps/test-docs/Front.png", "upload_url": context.data["users"][uid]["initiate_journey_response"]["data"][detail_type]["uploadUrl"]}
 
 
 def get_hugosave_additional_details_data(context, uid):
@@ -1285,7 +1328,7 @@ def get_payee_id(context, payee_identifier, user_profile_identifier):
 
 
 def get_invalid_location_headers(context, device_info):
-    headers = get_mobile_verification_header(context, device_info)
+    headers = get_user_name_verification_header(context, device_info)
     headers["x-location-coordinates"] = "1340,7887"
     return headers
 

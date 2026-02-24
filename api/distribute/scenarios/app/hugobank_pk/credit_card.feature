@@ -176,7 +176,7 @@ Feature: Credit_card feature
 
     Then I wait for 10 seconds
 
-    And I check the available credits for user UID1 and available credit should be 19000 approx
+    And I check the available credits for user UID1 and available credit should be 17350 approx
 
 #-------------------------------------Transaction after activation------------------------------------------------
     Then I wait for card status as CARD_STATUS_UPGRADED to activate PHYSICAL card for user UID1
@@ -323,45 +323,50 @@ Feature: Credit_card feature
 
   Scenario: Fetch credit-related references data for existing PLUS user
 
-# current card is replaced and is disabled so u need to create a new card and activate
-# it before writing any scenario using this method
-
-#    Then I wait for card status as CARD_STATUS_ACTIVE to activate PHYSICAL card for user UID1
-#    And I store activated card details for user UID1
+    Then I wait for card status as CARD_STATUS_ACTIVE to activate PHYSICAL card for user UID1
+    And I store activated card details for user UID1
 
 #    And I fetch card intents list for user UID1
 #    Then I get card transaction channel limits for user UID1 and expect status code 200
 #    Then I fetch credit account balance for user UID1
 
-#    Then I fetch credit account list for user UID1
-#    Then I fetch credit account balance for user UID1
+    Then I fetch credit account list for user UID1
+    Then I fetch credit account balance for user UID1
 
 #    Then I fetch credit card constants for HUGOBANK
-#    And I check the balance of the wallet with product code CASH_WALLET_CURRENT for user UID1 and the balance should be 26500 PKR exact
+#    And I check the balance of the wallet with product code CASH_WALLET_CURRENT for user UID1 and the balance should be 41000 PKR exact
 
 #  ---------------------credit bills related---------------------------------------------------
 #    Then I generate credit account bill for user UID1 and expect status code 200
+#    Then I wait for 20 seconds
 #    Then I get the credit account bills for user UID1 and expect status code 200
 #    Then I get the latest credit account bill for user UID1 and expect status code 200 and bill present as true
 #    Then I get the latest credit account bill for user UID1 and expect status code 200 and bill present as false
 
 #    Then I pay credit account bill for user UID1 with amount 100 and expect status code 200 and intent status as PENDING
-#
 #    And I check the available credits for user UID1 and available credit should be 30530 approx
 #
-#    And I check the balance of the wallet with product code CASH_WALLET_CURRENT for user UID1 and the balance should be 20300 PKR exact
+#    ---------------recharge credit card----------------------------
+#    And I check the balance of the wallet with product code CASH_WALLET_CURRENT for user UID1 and the balance should be 37350 PKR exact
+#    Then I pay credit account bill for user UID1 with amount 500 and expect status code 200 and intent status as PENDING
+#    And I check the balance of the wallet with product code CASH_WALLET_CURRENT for user UID1 and the balance should be 36850 PKR exact
+#    And I check the available credits for user UID1 and available credit should be 20000 approx
 
-# ------------------------replace card related-------------------------------------------------------------------
+    Then I fetch credit account balance for user UID1
+
+  Scenario Outline: Update and validate daily limits for transaction channels
+
+    Then I wait for card status as CARD_STATUS_ACTIVE to activate PHYSICAL card for user UID1
+    And I store activated card details for user UID1
     Then I fetch credit account list for user UID1
+    Then I fetch credit account balance for user UID1
 
-    And I fetch credit account balance for user UID1
+    Then I get card transaction channel limits for user UID1 and expect status code 200
 
-    # Store snapshot before replacement
-    And I store credit card replacement details for user UID1
+  # Authorisation for limit update
+    Then I initiate the initial user authorisation to UPDATE_CARD_LIMITS for user UID1 and expect a status of USER_AUTHORISATION_SUCCESS
 
-    Then I initiate the initial user authorisation to REPLACE_CARD for user UID1 and expect a status of USER_AUTHORISATION_SUCCESS
-
-    Then I initiate the final user authorisation to REPLACE_CARD and expect a user authorisation status as USER_AUTHORISATION_INITIATED for user UID1
+    Then I initiate the final user authorisation to UPDATE_CARD_LIMITS and expect a user authorisation status as USER_AUTHORISATION_INITIATED for user UID1
 
     And I initiate the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_INITIATED
 
@@ -369,23 +374,33 @@ Feature: Credit_card feature
 
     And I submit the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_SUCCESSFUL
 
-    Then I submit the final user authorisation for REPLACE_CARD of user UID1 and expect a status USER_AUTHORISATION_SUBMITTED
+    Then I submit the final user authorisation for UPDATE_CARD_LIMITS of user UID1 and expect a status USER_AUTHORISATION_SUBMITTED
 
-    And I get the final user authorisation token for REPLACE_CARD of user UID1 and expect a status USER_AUTHORISATION_SUCCESS
+    And I get the final user authorisation token for UPDATE_CARD_LIMITS of user UID1 and expect a status USER_AUTHORISATION_SUCCESS
 
+  # Update limit
+    Then I update <limit_id> to <limit_value> for user UID1 and expect status code 200
+    And I verify <limit_id> limit for user UID1 should be <limit_value>
 
-    Then I replace Physical credit card for user UID1 and expect a card status of CARD_STATUS_PENDING
+  # Transaction above limit
+    Given I create below transaction for PHYSICAL card for user profile id and expect a status code of 200
+      | user_profile_identifier | transaction_permutation_name | billing_amount | is_foreign_txn | channel       |
+      | UID1                    | AUTH_CLEAR                   | <above_amount> | false          | <channel>     |
 
+    Then I check available credit for user UID1 should be <credit_after_above>
 
-    Then I check old card status is CARD_STATUS_DISABLED for user UID1
+  # Transaction below limit
+    Given I create below transaction for PHYSICAL card for user profile id and expect a status code of 200
+      | user_profile_identifier | transaction_permutation_name | billing_amount | is_foreign_txn | channel       |
+      | UID1                    | AUTH_CLEAR                   | <below_amount> | false          | <channel>     |
 
-    Then I fetch credit account list for user UID1
+    Then I check available credit for user UID1 should be <credit_after_below>
 
-    And I fetch credit account balance for user UID1
-
-    And I verify credit account integrity after replacement for user UID1
-
-
+    Examples:
+      | limit_id               | limit_value | channel      | above_amount | below_amount | credit_after_above | credit_after_below |
+      | POS_DAILY_LIMIT        | 5000        | POS          | 6000         | 500          | 19500              | 19000              |
+      | E_COMMERCE_DAILY_LIMIT | 5000        | E_COMMERCE   | 6000         | 500          | 19000              | 18500              |
+      | ATM_DAILY_LIMIT        | 5000        | ATM          | 6000         | 500          | 18500              | 16850              |
 
 
   Scenario: User views credit card PIN successfully
@@ -646,8 +661,6 @@ Feature: Credit_card feature
 
     Then I fetch credit account list for user UID1
 
-
-
   Scenario: Replace Physical Secured Credit Card and verify financial integrity
 
     Then I fetch credit account list for user UID1
@@ -760,3 +773,33 @@ Feature: Credit_card feature
     Given I create below transaction for PHYSICAL card for user profile id and expect a status code of 200
       | user_profile_identifier | transaction_permutation_name | billing_amount | is_foreign_txn | channel |
       | UID1                    | AUTH_CLEAR                   | 500            | false          | ATM     |
+
+
+  Scenario Outline: Update and validate daily limits for transaction channels
+
+    Then I get card transaction channel limits for user UID1 and expect status code 200
+
+  # Authorisation for limit update
+    Then I initiate the initial user authorisation to UPDATE_CARD_LIMITS for user UID1 and expect a status of USER_AUTHORISATION_SUCCESS
+    Then I initiate the final user authorisation to UPDATE_CARD_LIMITS and expect a user authorisation status as USER_AUTHORISATION_INITIATED for user UID1
+    And I complete PASSCODE authorisation for UPDATE_CARD_LIMITS for user UID1
+    Then I submit the final user authorisation for UPDATE_CARD_LIMITS of user UID1 and expect a status USER_AUTHORISATION_SUBMITTED
+    And I get the final user authorisation token for UPDATE_CARD_LIMITS of user UID1 and expect a status USER_AUTHORISATION_SUCCESS
+
+  # Update limit
+    Then I update <limit_id> to <limit_value> for user UID1 and expect status code 200
+    And I verify <limit_id> limit for user UID1 should be <limit_value>
+
+  # Transaction above limit
+    Given I create transaction of <above_amount> on <channel> for PHYSICAL card for UID1 and expect status code 200
+    Then I check available credit for user UID1 should remain <credit_after_above>
+
+  # Transaction below limit
+    Given I create transaction of <below_amount> on <channel> for PHYSICAL card for UID1 and expect status code 200
+    Then I check available credit for user UID1 should be <credit_after_below>
+
+    Examples:
+      | limit_id               | limit_value | channel      | above_amount | below_amount | credit_after_above | credit_after_below |
+      | POS_DAILY_LIMIT        | 5000        | POS          | 6000         | 3000         | 20000              | 17000              |
+      | E_COMMERCE_DAILY_LIMIT | 5000        | E_COMMERCE   | 6000         | 3000         | 17000              | 14000              |
+      | ATM_DAILY_LIMIT        | 5000        | ATM          | 6000         | 3000         | 14000              | 9850               |

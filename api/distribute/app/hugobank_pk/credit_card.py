@@ -261,12 +261,12 @@ def get_card_txn_channel_limits(context, uid: str, expected_status_code: str):
 
     assert "data" in response, f"Missing data in response: {response}"
 
-    context.data["users"][uid]["credit_accounts"] = (
-        context.data["users"][uid]["credit_accounts"]
-        if isinstance(context.data["users"][uid].get("credit_accounts"), dict)
-        else {}
-    )
-    context.data["users"][uid]["credit_accounts"]["channelDetails"] = response["data"]["channelDetails"]
+    credit_accounts = context.data["users"][uid].get("credit_accounts", [])
+
+    if not isinstance(credit_accounts, list) or not credit_accounts:
+        raise Exception("Credit accounts missing or invalid in context")
+
+    credit_accounts[0]["channelDetails"] = response["data"]["channelDetails"]
 
 @Step("I update card limit for user ([^']*) and expect status code ([^']*)")
 def update_card_limit(context, uid: str, expected_status_code: str):
@@ -763,6 +763,119 @@ def check_old_card_status(context, old_card_status, uid):
                 response["data"]["cardStatus"] == old_card_status
         ), f"Expected Card status: {old_card_status}\nActual Card status: {response['data']['cardStatus']}"
 
+
+################################For scenario outlining##################################################################
+
+@Step("I update ([^']*) to ([^']*) for user ([^']*) and expect status code ([^']*)")
+def update_card_limit(context, limit_id: str, limit_value: str, uid: str, expected_status_code: str):
+    request = context.request
+    card_id = context.data["users"][uid]["card_id"]
+    # card_id = context.data["users"][uid]["credit_card"]["cardId"]
+    requested_limit_name = limit_id
+    new_value = int(limit_value)
+
+    # channel_details = context.data["users"][uid]["credit_accounts"]["channelDetails"]
+    channel_details = context.data["users"][uid]["credit_accounts"][0]["channelDetails"]
+
+    resolved_limit_id = None
+    for channel in channel_details:
+        if requested_limit_name.startswith(channel["channel"]):
+            resolved_limit_id = channel["cardLimitDetails"]["limitId"]
+            break
+
+    assert resolved_limit_id, f"Unable to resolve limitId for {requested_limit_name}"
+
+
+    payload = {
+        "limitId": resolved_limit_id,
+        "value": new_value,
+    }
+
+    headers = ah.get_user_header(context, uid)
+    headers["x-final-user-authorisation-token"] = context.data["users"][uid][
+        "user_authorisation_token"
+    ]
+
+    response = request.hugosave_put_request(
+        path=ah.card_urls["update_limits"].replace("{card-id}", card_id),
+        data=payload,
+        headers=headers,
+    )
+
+    assert check_status_distribute(response, expected_status_code), (
+        f"Expected {expected_status_code}, received: {response}"
+    )
+
+@Step("I verify ([^']*) limit for user ([^']*) should be ([^']*)")
+def verify_updated_channel_limit(context, limit_name: str, uid: str, expected_limit: str):
+    request = context.request
+    expected_limit = float(expected_limit)
+
+    # card_id = context.data["users"][uid]["credit_card"]["cardId"]
+    card_id = context.data["users"][uid]["card_id"]
+    response = request.hugosave_get_request(
+        path=ah.card_urls["get_limits"].replace("{card-id}", card_id),
+        headers=ah.get_user_header(context, uid),
+    )
+
+    assert check_status_distribute(response, 200), (
+        f"Failed to fetch limits. Response: {response}"
+    )
+
+    assert "data" in response and "channelDetails" in response["data"], (
+        f"Missing channelDetails in response: {response}"
+    )
+
+    channel_details = response["data"]["channelDetails"]
+
+    expected_channel = "_".join(limit_name.split("_")[:-2])
+
+    matched = False
+
+    for channel in channel_details:
+        if channel["channel"] == expected_channel:
+            limit_details = channel.get("cardLimitDetails", {})
+            user_set_value = limit_details.get("userSetValue")
+
+            assert user_set_value == expected_limit, (
+                f"{expected_channel} limit mismatch. "
+                f"Expected {expected_limit}, got {user_set_value}"
+            )
+            matched = True
+            break
+
+    assert matched, (
+        f"No channel found for {expected_channel}. "
+        f"Available channels: {[c['channel'] for c in channel_details]}"
+    )
+
+@Step("I check available credit for user ([^']*) should be ([^']*)")
+def check_available_credit(context, uid, expected_amount):
+    request = context.request
+
+    credit_account_id = context.data["users"][uid]["credit_accounts"][0]["creditAccountId"]
+
+    expected_amount = float(expected_amount)
+
+    @retry(AssertionError, tries=40, delay=20, logger=None)
+    def retry_for_available_credit():
+
+        response = request.hugosave_get_request(
+            path=ah.cms_urls["balance"].replace("{account-id}", credit_account_id),
+            headers=ah.get_user_header(context, uid),
+        )
+
+        assert check_status_distribute(response, 200)
+
+        available_credit_balance = float(response["data"]["availableCredit"])
+
+        assert available_credit_balance == expected_amount, \
+            f"Expected {expected_amount}, got {available_credit_balance}"
+
+    retry_for_available_credit()
+
+
+##################################################################################################
 
 
 

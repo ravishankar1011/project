@@ -199,7 +199,39 @@
 
 
 
+# ------------------------replace card related-------------------------------------------------------------------
+    Then I fetch credit account list for user UID1
 
+    And I fetch credit account balance for user UID1
+
+    # Store snapshot before replacement
+    And I store credit card replacement details for user UID1
+
+    Then I initiate the initial user authorisation to REPLACE_CARD for user UID1 and expect a status of USER_AUTHORISATION_SUCCESS
+
+    Then I initiate the final user authorisation to REPLACE_CARD and expect a user authorisation status as USER_AUTHORISATION_INITIATED for user UID1
+
+    And I initiate the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_INITIATED
+
+    Then I process the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_PROCESSED
+
+    And I submit the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_SUCCESSFUL
+
+    Then I submit the final user authorisation for REPLACE_CARD of user UID1 and expect a status USER_AUTHORISATION_SUBMITTED
+
+    And I get the final user authorisation token for REPLACE_CARD of user UID1 and expect a status USER_AUTHORISATION_SUCCESS
+
+
+    Then I replace Physical credit card for user UID1 and expect a card status of CARD_STATUS_PENDING
+
+
+    Then I check old card status is CARD_STATUS_DISABLED for user UID1
+
+    Then I fetch credit account list for user UID1
+
+    And I fetch credit account balance for user UID1
+
+    And I verify credit account integrity after replacement for user UID1
 
 
 
