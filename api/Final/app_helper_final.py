@@ -1346,3 +1346,16 @@ def get_portal_principle_id(context):
         return "3b4e6c8a-0d2f-421e-b9a7-5c8e2d3f1b09"
     else:
         return "7212248a-0b7f-4ac9-a0c2-52826d65b43c"
+
+
+def get_credit_account_id(context, uid, product_code=None):
+    credit_accounts = context.data["users"][uid].get("credit_accounts", [])
+
+    for account in credit_accounts:
+        if product_code:
+            if account.get("productCode") == product_code:
+                return account.get("creditAccountId")
+        else:
+            return account.get("creditAccountId")
+
+    raise Exception(f"No matching credit account found for user {uid}")
