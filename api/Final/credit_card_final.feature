@@ -1261,3 +1261,36 @@ Feature: Credit_card feature
       | POS          | 20000              | 17000                |
       | E_COMMERCE   | 20000              | 17000                |
       | ATM          | 20000              | 15850                |
+
+
+
+  Scenario Outline: Order credit card
+
+    Then User fetch credit card constants for HUGOBANK
+
+    Then User UID1 initiates the initial user authorisation to ORDER_CARD and expects 200 as the status code and a status of USER_AUTHORISATION_SUCCESS
+
+    Then User UID1 initiates the final user authorisation to ORDER_CARD and expects a user authorisation status of USER_AUTHORISATION_INITIATED
+
+    And User UID1 initiates the PASSCODE journey within the PASSCODE_STEP for authorisation and expects a status of JOURNEY_INITIATED
+
+    Then Process the PASSCODE journey within the PASSCODE_STEP for user UID1 to authorise the user and expect a status JOURNEY_PROCESSED
+
+    And User UID1 submits the PASSCODE journey within the PASSCODE_STEP for authorisation and expects a status of JOURNEY_SUCCESSFUL
+
+    Then User UID1 submits the final user authorisation for ORDER_CARD and expects a status of USER_AUTHORISATION_SUBMITTED
+
+    And Get the final user authorisation token for ORDER_CARD of user UID1 and expect a status USER_AUTHORISATION_SUCCESS
+
+    Then User order a Physical Visa Credit Card as CREDIT_CARD for UID1 with card name as random_valid_choice and expect a status code of <expected_status_code> and expect a card status of CARD_STATUS_PENDING
+      | credit_limit           |
+      | <credit_limit>         |
+
+    Examples:
+      | credit_limit       | expected_status_code    |
+      | 4000               | E9400                   |
+      | 360000             | E9400                   |
+      | 60000              | HSA_9145                |
+      | 20000              | 200                     |
+
+
