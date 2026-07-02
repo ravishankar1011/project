@@ -1,0 +1,42 @@
+cc before merge,, one function/step was written like this
+
+@then("User ([^']*) activates the ([^']*) with ([^']*) token, with status ([^']*)")
+def get_card_id(
+    context,
+    uid,
+    card_tag,
+    token_case: str,
+    expected_status_code,
+):
+    global activation_token
+    request = context.request
+
+    # if (
+    #     context.data["users"][uid]["cards"][0]["cardType"]
+    #     == "PHYSICAL"
+    # ):
+    card_id = ah.get_card_id(context, uid, card_tag)
+
+    activation_token = ""
+    response = request.hugosave_get_request(
+        path=ah.card_urls["activation_token"].replace("{card-id}", card_id),
+        headers=ah.get_user_header(context, uid),
+    )
+    if check_status_distribute(response, "200"):
+        if token_case == "valid":
+            activation_token = response["data"]["activationToken"]
+        elif token_case == "invalid":
+            activation_token = "None"
+
+        headers = ah.get_user_header(context, uid)
+        if "user_authorisation_token" in context.data["users"][uid]:
+            headers["x-final-user-authorisation-token"] = context.data["users"][
+                uid
+            ]["user_authorisation_token"]
+
+        response = request.hugosave_put_request(
+            path=ah.card_urls["activate_card"].replace("{card-id}", card_id),
+            data={"card_id": card_id, "card_token": activation_token},
+            headers=headers,
+        )
+        assert check_status_distribute(response, expected_status_code), f"Expected status code: {expected_status_code}, but received response: {response}"
